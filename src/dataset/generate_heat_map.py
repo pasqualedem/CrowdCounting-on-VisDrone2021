@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 from scipy.ndimage.filters import gaussian_filter
 import matplotlib.pyplot as plt
-import h5py
+import scipy.sparse as sparse
 from tqdm import tqdm
-import re
+
 import xml.etree.ElementTree as ET
 
 GAMMA = 3
@@ -58,12 +58,11 @@ def make_ground_truth(folder, img_folder, name_rule, img_rule, dataframe_fun, si
             size = img_size
         df = dataframe_fun(os.path.join(folder, gt))
         heatmap = generate_heatmap(df, img_size, size)
-        hf = h5py.File(
-            os.path.join(
-                img_folder,
-                (fname + '_' + str(size) + '.h5')), 'w')
-        hf.create_dataset('density', data=heatmap)
-        hf.close()
+
+        sparse.save_npz(os.path.join(
+            img_folder,
+            (fname + '_' + str(size) + '.npz')),
+            sparse.csr_matrix(heatmap))
 
 
 def dataframe_load_test(filename):
@@ -89,8 +88,8 @@ def dataframe_load_train(filename):
     @return: dataframe of columns [x, y]
     """
 
-    xs=[]
-    ys=[]
+    xs = []
+    ys = []
     tree = ET.parse(filename)
     root = tree.getroot()
     for point in root.iter('point'):
@@ -114,6 +113,6 @@ if __name__ == '__main__':
     train = [train_rule, img_train_rule, dataframe_load_train, size]
     test = [test_rule, img_test_rule, dataframe_load_test, size]
 
-    make_ground_truth('../../../dataset/Train/GT_',
-                      '../../../dataset/Train/RGB',
+    make_ground_truth('../../datasets/VisDrone2021/Train/GT_',
+                      '../../datasets/VisDrone2021/Train/RGB',
                       *train)
