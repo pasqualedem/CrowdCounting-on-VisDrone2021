@@ -1,10 +1,9 @@
 """RefineNet-LightWeight. No RCU, only LightWeight-CRP block."""
 
-import math
-
 import torch.nn as nn
 import torch.nn.functional as F
-from block import Bottleneck, CRPBlock, conv1x1, conv3x3
+from models.block import Bottleneck, CRPBlock, conv1x1, conv3x3
+
 
 class MobileCount(nn.Module):
 

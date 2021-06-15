@@ -116,7 +116,7 @@ class FusionBlock(nn.Module):
 
     def forward(self, x, y):
         midx = self.conv_weight(x)
-        midx = nn.Upsample(size=x.size()[2:], mode='bilinear')(midx)
+        midx = nn.Upsample(size=y.size()[2:], mode='bilinear')(midx)
 
         midy = self.conv_adapt(y)
 
