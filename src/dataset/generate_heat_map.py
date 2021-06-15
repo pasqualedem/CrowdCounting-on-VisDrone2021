@@ -7,9 +7,10 @@ import matplotlib.pyplot as plt
 import h5py
 from tqdm import tqdm
 import re
+import xml.etree.ElementTree as ET
 
 GAMMA = 3
-FILENAME_LEN = 5
+FILENAME_LEN = 0
 
 
 def generate_heatmap(df, img_size, wished_heatmap_size):
@@ -21,19 +22,17 @@ def generate_heatmap(df, img_size, wished_heatmap_size):
     @param wished_heatmap_size: parameter for resizing the heatmap
     @return:
     """
-    heatmaps = {}
-    frames = np.unique(df['frame'].values)
     img_size = np.array(img_size)
     wished_heatmap_size = np.array(wished_heatmap_size)
     ratio = (img_size / wished_heatmap_size)
-    for frame in frames:
-        heads = np.rint(df[df['frame'] == frame][['x', 'y']].values / ratio).astype('int64')
-        heatmap = np.zeros(wished_heatmap_size)
-        heatmap[np.clip(heads[:, 1], 0, wished_heatmap_size[0]) - 1,
-                np.clip(heads[:, 0] - 1, 0, wished_heatmap_size[1]) - 1] = 1
-        heatmap = gaussian_filter(heatmap, GAMMA / ratio)
-        heatmaps[frame] = heatmap
-    return heatmaps
+
+    heads = np.rint(df[['x', 'y']].values / ratio).astype('int64')
+    heatmap = np.zeros(wished_heatmap_size)
+    heatmap[np.clip(heads[:, 1], 0, wished_heatmap_size[0]) - 1,
+            np.clip(heads[:, 0] - 1, 0, wished_heatmap_size[1]) - 1] = 1
+    heatmap = gaussian_filter(heatmap, GAMMA / ratio)
+
+    return heatmap
 
 
 def make_ground_truth(folder, img_folder, name_rule, img_rule, dataframe_fun, size=None):
@@ -52,23 +51,19 @@ def make_ground_truth(folder, img_folder, name_rule, img_rule, dataframe_fun, si
 
     for gt in tqdm(gt_files):
         fname, ext = gt.split('.')
-        seq_folder = img_rule(img_folder, fname)
-        img_size = plt.imread(
-            os.path.join(seq_folder,
-                         list(filter(lambda x: '.jpg' in x, os.listdir(seq_folder)))[0]
-                         )).shape[:2]
+        frame_id = img_rule(fname)
+        img_size = plt.imread(os.path.join(img_folder, frame_id)).shape[:2]
 
         if size is None:
             size = img_size
         df = dataframe_fun(os.path.join(folder, gt))
-        heatmaps = generate_heatmap(df, img_size, size)
-        for heatmap in heatmaps:
-            hf = h5py.File(
-                os.path.join(
-                    seq_folder,
-                    (str(heatmap).zfill(FILENAME_LEN) + re.sub(', |\(|\)', '_', str(size)) + '.h5')), 'w')
-            hf.create_dataset('density', data=heatmaps[heatmap])
-            hf.close()
+        heatmap = generate_heatmap(df, img_size, size)
+        hf = h5py.File(
+            os.path.join(
+                img_folder,
+                (fname + '_' + str(size) + '.h5')), 'w')
+        hf.create_dataset('density', data=heatmap)
+        hf.close()
 
 
 def dataframe_load_test(filename):
@@ -90,26 +85,35 @@ def dataframe_load_test(filename):
 def dataframe_load_train(filename):
     """
     Load the dataframe for the training set csv format of VisDrone
-    @param filename: csv path
-    @return: dataframe of columns [frame, x, y]
+    @param filename: xml path
+    @return: dataframe of columns [x, y]
     """
-    df = pd.read_csv(filename, header=None)
-    df.columns = ['frame', 'x', 'y']
+
+    xs=[]
+    ys=[]
+    tree = ET.parse(filename)
+    root = tree.getroot()
+    for point in root.iter('point'):
+        xs.append(int(point.find('x').text))
+        ys.append(int(point.find('y').text))
+
+    df = pd.DataFrame(list(zip(xs, ys)),
+                      columns=['x', 'y'])
     return df
 
 
 if __name__ == '__main__':
-    train_rule = lambda x: '.txt' in x and 'clean' not in x
+    train_rule = lambda x: '.xml' in x
     test_rule = lambda x: '_clean.txt' in x
 
-    img_train_rule = lambda x, y: os.path.join(x, y)
-    img_test_rule = lambda x, y: os.path.join(x, re.sub('\_clean$', '', y))
+    img_train_rule = lambda x: x.replace('R', '.jpg')
+    img_test_rule = lambda x, y: os.path.join(x, y)
 
-    size = (540, 960)
+    size = None
 
     train = [train_rule, img_train_rule, dataframe_load_train, size]
     test = [test_rule, img_test_rule, dataframe_load_test, size]
 
-    make_ground_truth('../../dataset/VisDrone2020-CC/annotations',
-                      '../../dataset/VisDrone2020-CC/train',
+    make_ground_truth('../../../dataset/Train/GT_',
+                      '../../../dataset/Train/RGB',
                       *train)
