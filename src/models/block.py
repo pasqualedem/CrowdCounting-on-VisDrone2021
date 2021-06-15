@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 # Helpers / wrappers
 def conv3x3(in_planes, out_planes, stride=1, bias=False):
@@ -108,39 +109,18 @@ class Bottleneck(nn.Module):
 
 
 class FusionBlock(nn.Module):
-    expansion = 4
+    def __init__(self, conv_weight_dim, conv_adapt_dim):
+        super(FusionBlock, self).__init__()
+        self.conv_weight = conv1x1(*conv_weight_dim, bias=False)
+        self.conv_adapt = conv1x1(*conv_adapt_dim, bias=False)
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None, expansion=1):
-        super(Bottleneck, self).__init__()
-        self.conv1 = nn.Conv2d(inplanes, inplanes*expansion, kernel_size=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(inplanes*expansion)
-        self.conv2 = nn.Conv2d(inplanes*expansion, inplanes*expansion, kernel_size=3, stride=stride,
-                               padding=1, bias=False, groups=inplanes*expansion)
-        self.bn2 = nn.BatchNorm2d(inplanes*expansion)
-        self.conv3 = nn.Conv2d(inplanes*expansion, planes, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(planes)
-        self.relu = nn.ReLU(inplace=True)
-        self.downsample = downsample
-        self.stride = stride
+    def forward(self, x, y):
+        midx = self.conv_weight(x)
+        midx = nn.Upsample(size=x.size()[2:], mode='bilinear')(midx)
 
-    def forward(self, x):
-        residual = x
+        midy = self.conv_adapt(y)
 
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.conv2(out)
-        out = self.bn2(out)
-        out = self.relu(out)
-
-        out = self.conv3(out)
-        out = self.bn3(out)
-
-        if self.downsample is not None:
-            residual = self.downsample(x)
-
-        out += residual
-        out = self.relu(out)
+        out = midx + midy
+        out = F.relu(out)
 
         return out
