@@ -34,8 +34,8 @@ class Trainer:
         self.epoch = 0
         self.val_loss = np.nan
 
-        if cfg.PRE_TRAINED:
-            checkpoint = torch.load(cfg.PRE_TRAINED)
+        if cfg.RESUME:
+            checkpoint = torch.load(cfg.RESUME)
             self.net.load_state_dict(checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])

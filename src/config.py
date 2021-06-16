@@ -12,13 +12,20 @@ __C.VAL_BATCH_SIZE = 6
 __C.TEST_BATCH_SIZE = 6
 __C.N_WORKERS = 2
 
-__C.PRE_TRAINED = None
+# Training settings
+__C.RESUME = False
 
 # path settings
 __C.EXP_PATH = '../exp'
 __C.DATASET = 'VisDrone'
-__C.NET = 'MobileCount'
 __C.DETAILS = '_1080x1920_NVS'
+
+# Net settings
+__C.NET = 'MobileCount'
+__C.VERSION = ''
+__C.KNOWN_MODEL = None
+__C.PRETRAINED = False
+__C.ENCODER = None  # Used only when NET is DoubleEncoderMobileCount
 
 # learning optimizer settings
 __C.LR = 1e-4  # learning rate
@@ -34,11 +41,11 @@ __C.OPTIM_ADAM = ('Adam',
                       'weight_decay': __C.W_DECAY,
                   })
 __C.OPTIM_SGD = ('SGD',
-                  {
-                      'lr': __C.LR,
-                      'weight_decay': __C.W_DECAY,
-                      'momentum': 0.95
-                  })
+                 {
+                     'lr': __C.LR,
+                     'weight_decay': __C.W_DECAY,
+                     'momentum': 0.95
+                 })
 
 __C.OPTIM = __C.OPTIM_ADAM  # Chosen optimizer
 
@@ -49,9 +56,16 @@ __C.EARLY_STOP_DELTA = 1e-2
 __C.PRINT_FREQ = 10
 
 now = time.strftime("%m-%d_%H-%M", time.localtime())
+
+__C.NETNAME = __C.NET + __C.VERSION \
+              + (__C.KNOWN_MODEL if __C.KNOWN_MODEL else '') \
+              + ('_freeze_' if __C.PRETRAINED else '') \
+              + (__C.ENCODER if __C.ENCODER else '') \
+
+
 __C.EXP_NAME = now \
                + '_' + __C.DATASET \
-               + '_' + __C.NET \
+               + '_' + __C.NETNAME \
                + '_' + str(__C.LR) \
                + '_' + __C.DETAILS
 __C.DEVICE = 'cuda'  # cpu or cuda

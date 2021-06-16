@@ -18,7 +18,7 @@ def load_CC_train():
     """
     Load CrowdCounter model net for training mode
     """
-    cc = CrowdCounter([0], cfg.NET)
+    cc = CrowdCounter([0], {key: cfg[key] for key in ['NET', 'VERSION', 'KNOWN_MODEL', 'PRETRAINED', 'ENCODER']})
     return cc
 
 
@@ -27,9 +27,9 @@ def load_CC_test():
     """
     Load CrowdCounter model net for testing mode
     """
+    model_path = ""
     cc = CrowdCounter([0], cfg.NET)
-    if cfg.PRE_TRAINED:
-        cc.load(cfg.PRE_TRAINED)
+    cc.load(model_path)
     return cc
 
 

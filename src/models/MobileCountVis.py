@@ -44,6 +44,11 @@ class MobileCountBase(nn.Module):
 
         return out
 
+    def train(self, mode: bool = True):
+        for name, m in self.named_children():
+            if hasattr(m, 'pretrained'):
+                m.train(False)
+
 
 class Encoder(nn.Module):
 
@@ -64,10 +69,10 @@ class Encoder(nn.Module):
 
 
 class PretrainedEncoder(Encoder):
-    def __init__(self, pretrained):
+    def __init__(self, model_name, pretrained):
         super().__init__()
         print('load the pre-trained model.')
-        net = getattr(models, pretrained)(True)
+        net = getattr(models, model_name)(True)
         self.conv1 = net.conv1
         self.bn1 = net.bn1
         self.relu = nn.ReLU(inplace=True)
@@ -77,10 +82,15 @@ class PretrainedEncoder(Encoder):
         self.layers.append(net.layer2)
         self.layers.append(net.layer3)
         self.layers.append(net.layer4)
-        self.pretrained = True
 
         self.layer_sizes = [list(list(layer.named_children())[-1][1].named_children())[-3][1].out_channels
                             for layer in self.layers]
+
+        if pretrained:
+            for param in self.parameters():
+                param.requires_grad = False
+                self.pretrained = True
+            self.train(False)
 
 
 class LWEncoder(Encoder):
@@ -200,8 +210,16 @@ class MobileCount(MobileCountBase):
 
 
 class PretrainedMobileCount(MobileCountBase):
-    def __init__(self, pretrained_model, decoder_class):
-        encoder = PretrainedEncoder(pretrained_model)
-        decoder = decoder_class(encoder.layer_sizes)
+    def __init__(self, model_name, pretrained):
+        encoder = PretrainedEncoder(model_name, pretrained)
+        decoder = Decoder(encoder.layer_sizes)
+
+        super().__init__(encoder.get_layer_sizes(), encoder, decoder)
+
+
+class DoubleEncoderMobileCount(MobileCountBase):
+    def __init__(self, encoder, encoder_params):
+        encoder = encoder(*encoder_params)
+        decoder = Decoder(encoder.layer_sizes)
 
         super().__init__(encoder.get_layer_sizes(), encoder, decoder)

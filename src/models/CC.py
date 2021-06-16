@@ -1,24 +1,43 @@
 import torch
 import torch.nn as nn
-from models.MobileCount import MobileCount
-
+from models.MobileCountVis import MobileCount, PretrainedMobileCount, DoubleEncoderMobileCount
 MBVersions = {
-    'MobileCountx0_5': [16, 32, 64, 128],
-    'MobileCountx0_75': [32, 48, 80, 160],
-    'MobileCount': [32, 64, 128, 256],
-    'MobileCountx1_25': [64, 96, 160, 320],
-    'MobileCountx2': [64, 128, 256, 512],
+    'x0_5': [16, 32, 64, 128],
+    'x0_75': [32, 48, 80, 160],
+    '': [32, 64, 128, 256],
+    'x1_25': [64, 96, 160, 320],
+    'x2': [64, 128, 256, 512],
 }
+
+# Dict that select which parameter pass to the class for each network
+Nets = {
+    'Pretrained': (PretrainedMobileCount, ['KNOWN_MODEL', 'PRETRAINED']),
+    'MobileCount': (MobileCount, ['VERSION']),
+    'DoubleEncoder': (DoubleEncoderMobileCount, ['ENCODER', 'KNOWN_MODEL', 'PRETRAINED', 'VERSION'])
+}
+
+
+def choose_model(model_args):
+    """
+    Choose which model to use and isntantiate it passing the args
+    :param model_args: Dict of args that contain NET key and related arguments
+    :return: The instatiated network
+    """
+    model, args = Nets[model_args.pop('NET')]
+    if model == 'DoubleEncoder':
+        encoder, args = Nets[model_args.pop('ENCODER')]
+        return model(encoder, *[model_args[arg] for arg in args])
+    return model(*[model_args[arg] for arg in args])
 
 
 class CrowdCounter(nn.Module):
     """
     Container class for MobileCount networks
     """
-    def __init__(self, gpus, model_name):
+    def __init__(self, gpus, model_args):
         super(CrowdCounter, self).__init__()
 
-        self.CCN = MobileCount(MBVersions[model_name])
+        self.CCN = choose_model(model_args)
         if len(gpus) > 1:
             self.CCN = torch.nn.DataParallel(self.CCN, device_ids=gpus).cuda()
         else:
