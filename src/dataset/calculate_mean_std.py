@@ -1,14 +1,15 @@
 import numpy as np
 from tqdm import tqdm
-from dataset.visdrone import VisDroneDataset, make_dataframe
+from dataset.visdrone2020 import VisDrone2020Dataset, make_dataframe as make_2020
+from dataset.visdrone2021 import VisDrone2021Dataset, make_dataframe as make_2021
 
 
 def calculate():
     """
     Calculate the mean and the standard deviation of a dataset
     """
-    df = make_dataframe('../dataset/VisDrone2020-CC/sequences')
-    ds = VisDroneDataset(df, train=False)
+    df = make_2021('../dataset/VisDrone2020-CC/sequences')
+    ds = VisDrone2021Dataset(df, train=False)
     length = len(ds)
     means = 0
     stds = 0

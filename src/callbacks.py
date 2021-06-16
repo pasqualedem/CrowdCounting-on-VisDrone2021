@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import torch
 import cv2
 import numpy as np
-from dataset.visdrone import cfg_data
+from dataset.visdrone2020 import cfg_data
 from transformations import DeNormalize
 
 

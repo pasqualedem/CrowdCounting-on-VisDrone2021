@@ -5,7 +5,7 @@ from callbacks import call_dict
 from evaluate import evaluate_model
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from models.CC import CrowdCounter
-from dataset.visdrone import load_test, load_train_val, cfg_data
+from dataset.visdrone2020 import load_test, load_train_val, cfg_data
 from dataset.run_datasets import make_dataset
 from run import run_model, run_transforms
 from train import Trainer

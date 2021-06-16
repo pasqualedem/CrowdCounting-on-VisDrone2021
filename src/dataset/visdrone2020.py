@@ -26,7 +26,7 @@ cfg_data.MEAN = [0.43476477, 0.44504763, 0.43252817]
 cfg_data.STD = [0.20490805, 0.19712372, 0.20312176]
 
 
-class VisDroneDataset(torch.utils.data.Dataset):
+class VisDrone2020Dataset(torch.utils.data.Dataset):
     """
     Dataset subclass for the VisDrone dataset
     """
@@ -123,7 +123,7 @@ def load_test():
     @return: the visdrone testset
     """
     df = make_dataframe('../dataset/VisDrone2020-CC/test')
-    ds = VisDroneDataset(df, train=False, gt_transform=False)
+    ds = VisDrone2020Dataset(df, train=False, gt_transform=False)
     return ds
 
 
@@ -145,11 +145,11 @@ def load_train_val():
     train_df = train_df.reset_index(drop=True)
     valid_df = valid_df.reset_index(drop=True)
 
-    train_set = VisDroneDataset(train_df)
+    train_set = VisDrone2020Dataset(train_df)
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=cfg.TRAIN_BATCH_SIZE, num_workers=cfg.N_WORKERS, shuffle=True)
 
-    val_set = VisDroneDataset(valid_df)
+    val_set = VisDrone2020Dataset(valid_df)
     val_loader = torch.utils.data.DataLoader(
         val_set, batch_size=cfg.VAL_BATCH_SIZE, num_workers=cfg.N_WORKERS, shuffle=True)
 
