@@ -13,17 +13,17 @@ import transformations as trans
 
 cfg_data = EasyDict()
 
-cfg_data.SIZE = (1080, 1920)
+cfg_data.SIZE = (512, 640)
 cfg_data.FILE_EXTENSION = '.jpg'
-cfg_data.GT_FILE_EXTENSION = '.h5'
+cfg_data.GT_FILE_EXTENSION = '.npz'
 cfg_data.LOG_PARA = 2550.0
 
 cfg_data.GAMMA_CORRECTION = False
 cfg_data.BETA_ALPHA = 4.2
 cfg_data.BETA_BETA = 2.4
 
-cfg_data.MEAN = [0.43476477, 0.44504763, 0.43252817]
-cfg_data.STD = [0.20490805, 0.19712372, 0.20312176]
+cfg_data.MEAN = [0.34899642, 0.33474687, 0.35247781, 0.49493573]
+cfg_data.STD = [0.15108294, 0.14548512, 0.146422, 0.15939873]
 
 
 class VisDrone2021Dataset(torch.utils.data.Dataset):
@@ -80,7 +80,7 @@ class VisDrone2021Dataset(torch.utils.data.Dataset):
         with pil.open(filename) as img:
             data = np.array(img)
         with pil.open(tir_filename) as img:
-            tir = np.array(img.split[0])
+            tir = np.array(img.split()[0])
         data = np.concatenate((data, tir.reshape(*tir.shape[:], 1)), axis=2)
         target = scipy.sparse.load_npz(target_filename).toarray()
         if self.train_transforms:
@@ -100,7 +100,7 @@ class VisDrone2021Dataset(torch.utils.data.Dataset):
 
 def make_dataframe(folder):
     """
-    Given a folder requiring to have subfolders each one containing the the frames and the h5 groundtruth,
+    Given a folder requiring to have subfolders each one containing the the frames and the npz groundtruth,
     builds a dataframe tracking all the dataset files
 
     @param folder: the path folder from where build the dataframe
@@ -108,7 +108,7 @@ def make_dataframe(folder):
     """
     rgb_folder = os.path.join(folder, 'RGB')
     tir_folder = os.path.join(folder, 'TIR')
-    gt_folder = os.path.join(folder, 'GT_')
+    gt_folder = os.path.join(folder, 'RGB')
     folders = os.listdir(rgb_folder)
     dataset = []
     for cur_folder in folders:
@@ -117,10 +117,10 @@ def make_dataframe(folder):
             if cfg_data.FILE_EXTENSION in file:
                 idx, ext = file.split('.')
                 gt = os.path.join(gt_folder, cur_folder,
-                                  idx + re.sub(', |\(|\)|\[|\]', '_', str(cfg_data.SIZE)) + cfg_data.GT_FILE_EXTENSION)
+                                  idx + '_' + re.sub(', |\(|\)|\[|\]', '_', str(cfg_data.SIZE)) + cfg_data.GT_FILE_EXTENSION)
                 tir = os.path.join(tir_folder, cur_folder,
                                   idx + 'R' + cfg_data.FILE_EXTENSION)
-                dataset.append([idx, os.path.join(folder, cur_folder, file), tir, gt])
+                dataset.append([idx, os.path.join(rgb_folder, cur_folder, file), tir, gt])
     return pd.DataFrame(dataset, columns=['id', 'filename', 'tir_filename', 'gt_filename'])
 
 
@@ -141,8 +141,8 @@ def load_train_val():
 
     @return: the train and validation DataLoader
     """
-    train_df = make_dataframe('../dataset/VisDrone2020-CC/train')
-    valid_df = make_dataframe('../dataset/VisDrone2020-CC/val')
+    train_df = make_dataframe('../../datasets/VisDrone2021/Train')
+    valid_df = make_dataframe('../../datasets/VisDrone2021/Val')
 
     # df = make_dataframe('../dataset/VisDrone2020-CC/train')
     # # Split the dataframe in train and validation
