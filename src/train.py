@@ -3,9 +3,7 @@ from torch.optim.lr_scheduler import StepLR
 
 from config import cfg
 from utils import *
-import time
 from tqdm import tqdm
-
 
 optimizers = {
     'Adam': optim.Adam,
@@ -34,7 +32,7 @@ class Trainer:
         self.optimizer = optimizers[cfg.OPTIM[0]](self.net.parameters(), **cfg.OPTIM[1])
         self.scheduler = StepLR(self.optimizer, step_size=cfg.NUM_EPOCH_LR_DECAY, gamma=cfg.LR_DECAY)
         self.epoch = 0
-        self.score = np.nan
+        self.val_loss = np.nan
 
         if cfg.PRE_TRAINED:
             checkpoint = torch.load(cfg.PRE_TRAINED)
@@ -42,15 +40,17 @@ class Trainer:
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
             self.epoch = checkpoint['epoch']
-            self.score = checkpoint['val loss']
+            self.val_loss = checkpoint['val_loss']
 
-        self.train_record = {'best_mae': 1e20, 'best_rmse': 1e20, 'best_model_name': ''}
-        self.timer = {'iter time': Timer(), 'train time': Timer(), 'val time': Timer()}
-        self.writer, self.log_txt = logger(self.exp_path, self.exp_name)
+        self.train_record = {'best_mae': 1e20, 'best_rmse': 1e20, 'best_val_loss': 1e20, 'best_model_name': ''}
+        self.timer = {'iter time': Timer(), 'train time': Timer(), 'val time': Timer(), 'inference time': Timer()}
+        self.logger = TrainLogger(self.exp_path, self.exp_name)
 
         self.i_tb = 0
 
         self.train_loader, self.val_loader = dataloader()
+
+        self.logger.writer.add_graph(self.net, self.train_loader.dataset.__getitem__(0))
 
     def train(self):
         """
@@ -72,7 +72,7 @@ class Trainer:
             if epoch % cfg.VAL_FREQ == 0 or epoch > cfg.VAL_DENSE_START:
                 self.validate()
 
-            if early_stop(self.score):
+            if early_stop(self.val_loss):
                 print('Early stopped! At epoch ' + str(self.epoch))
                 break
 
@@ -87,7 +87,8 @@ class Trainer:
         norm_pred_count = 0
 
         tk_train = tqdm(
-            enumerate(self.train_loader, 0), total=len(self.train_loader), leave=False,bar_format='{l_bar}{bar:32}{r_bar}',
+            enumerate(self.train_loader, 0), total=len(self.train_loader), leave=False,
+            bar_format='{l_bar}{bar:32}{r_bar}',
             colour='#ff0de7', desc='Train Epoch %d/%d' % (self.epoch, cfg.MAX_EPOCH)
         )
         postfix = {'loss': out_loss, 'lr': self.optimizer.param_groups[0]['lr'],
@@ -108,7 +109,7 @@ class Trainer:
 
             if (i + 1) % cfg.PRINT_FREQ == 0:
                 self.i_tb += 1
-                self.writer.add_scalar('train_loss', loss.item(), self.i_tb)
+                self.logger.writer.add_scalar('train_loss', loss.item(), self.i_tb)
                 self.timer['iter time'].toc(average=False)
                 out_loss = loss.item()
                 time = self.timer['iter time'].diff
@@ -133,9 +134,6 @@ class Trainer:
         maes = AverageMeter()
         mses = AverageMeter()
 
-        time_sampe = 0
-        step = 0
-
         tk_valid = tqdm(
             enumerate(self.val_loader, 0), total=len(self.val_loader),
             leave=False, bar_format='{l_bar}{bar:32}{r_bar}', desc='Validating'
@@ -148,12 +146,10 @@ class Trainer:
                 img = img.to(cfg.DEVICE)
                 gt = gt.to(cfg.DEVICE)
 
-                step = step + 1
-                time_start1 = time.time()
+                self.timer['inference time'].tic()
                 pred_map = self.net.predict(img)
-                time_end1 = time.time()
+                self.timer['inference time'].toc(average=True)
                 self.net.build_loss(pred_map, gt)
-                time_sampe = time_sampe + (time_end1 - time_start1)
 
                 pred_map = pred_map.squeeze().data.cpu().numpy()
                 gt = gt.data.cpu().numpy()
@@ -165,30 +161,21 @@ class Trainer:
                 maes.update(abs(gt_count - pred_cnt))
                 mses.update((gt_count - pred_cnt) * (gt_count - pred_cnt))
 
-        mae = maes.avg
-        rmse = np.sqrt(mses.avg)
-        self.score = rmse
-        loss = losses.avg
-
-        self.writer.add_scalar('val_loss', loss, self.epoch + 1)
-        self.writer.add_scalar('mae', mae, self.epoch + 1)
-        self.writer.add_scalar('rmse', rmse, self.epoch + 1)
-
-        self.train_record = update_model({'model_state_dict': self.net.state_dict(),
-                                          'optimizer_state_dict': self.optimizer.state_dict(),
-                                          'scheduler_state_dict': self.scheduler.state_dict(),
-                                          'epoch': self.epoch,
-                                          'val loss': self.score
-                                          },
-                                         self.epoch, self.exp_path, self.exp_name,
-                                         [mae, rmse, loss], self.train_record,
-                                         self.log_txt)
-
         self.timer['val time'].toc(average=False)
 
-        print_summary(self.epoch,
-                      [mae, rmse, loss],
-                      self.train_record,
-                      (time_sampe * 1000 / step),
-                      self.timer['train time'].diff,
-                      self.timer['val time'].diff)
+        mae = maes.avg
+        rmse = np.sqrt(mses.avg)
+        self.val_loss = losses.avg
+
+        self.train_record = self.logger.update_model({'model_state_dict': self.net.state_dict(),
+                                                      'optimizer_state_dict': self.optimizer.state_dict(),
+                                                      'scheduler_state_dict': self.scheduler.state_dict(),
+                                                      'epoch': self.epoch,
+                                                      'val_loss': self.val_loss
+                                                      },
+                                                     self.epoch, self.exp_path, self.exp_name,
+                                                     [mae, rmse, self.val_loss], self.train_record)
+
+        self.logger.summary(self.epoch,
+                            [mae, rmse, self.val_loss],
+                            self.timer)

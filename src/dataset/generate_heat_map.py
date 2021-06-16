@@ -6,6 +6,7 @@ from scipy.ndimage.filters import gaussian_filter
 import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 from tqdm import tqdm
+import re
 
 import xml.etree.ElementTree as ET
 
@@ -63,38 +64,8 @@ def make_ground_truth(folder, img_folder, name_rule, img_rule, dataframe_fun, si
 
             sparse.save_npz(os.path.join(
                 os.path.join(img_folder, f),
-                (fname.split('R')[0] + '_' + str(size) + '.npz')),
+                (fname.split('R')[0] + '_' + re.sub(', |\(|\)|\[|\]', '_', str(size)) + '.npz')),
                 sparse.csr_matrix(heatmap))
-
-
-# def make_ground_truth(folder, img_folder, name_rule, img_rule, dataframe_fun, size=None):
-#     """
-#     Generate the ground truth h5 files v2
-#
-#     :param folder: The folder where the annotations are stored
-#     :param img_folder: The folder where the images are stored
-#     :param name_rule: rule for including annotations files based on their name
-#     :param img_rule: rule for obtaining the img name file from the folder and annotation name file
-#     :param dataframe_fun: function that returns a [frame, x, y] dataframe given the annotation file name
-#     :param size: wished size of heatmap
-#     """
-#     gt_files = os.listdir(folder)
-#     gt_files = list(filter(name_rule, gt_files))
-#
-#     for gt in tqdm(gt_files):
-#         fname, ext = gt.split('.')
-#         frame_id = img_rule(fname)
-#         img_size = plt.imread(os.path.join(img_folder, frame_id)).shape[:2]
-#
-#         if size is None:
-#             size = img_size
-#         df = dataframe_fun(os.path.join(folder, gt))
-#         heatmap = generate_heatmap(df, img_size, size)
-#
-#         sparse.save_npz(os.path.join(
-#             img_folder,
-#             (fname + '_' + str(size) + '.npz')),
-#             sparse.csr_matrix(heatmap))
 
 
 def dataframe_load_test(filename):
@@ -136,8 +107,6 @@ def dataframe_load_train(filename):
 if __name__ == '__main__':
     train_rule = lambda x: '.xml' in x
     test_rule = lambda x: '_clean.txt' in x
-
-    # img_train_rule = lambda x, y: os.path.join(x, y)
 
     img_train_rule = lambda x: x.replace('R', '.jpg')
     img_test_rule = lambda x, y: os.path.join(x, y)

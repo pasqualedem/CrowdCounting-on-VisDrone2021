@@ -4,7 +4,7 @@ import os
 import torch
 import torchvision
 from PIL import Image as pil
-import h5py
+import scipy.sparse
 import re
 from config import cfg
 from easydict import EasyDict
@@ -73,14 +73,16 @@ class VisDrone2021Dataset(torch.utils.data.Dataset):
         """
         # Obtain the filename and target
         filename = self.dataframe.loc[i]['filename']
+        tir_filename = self.dataframe.loc[i]['tir_filename']
         target_filename = self.dataframe.loc[i]['gt_filename']
 
-        # Load the img and the ground truth
+        # Load the imgs and the ground truth
         with pil.open(filename) as img:
             data = np.array(img)
-        hf = h5py.File(target_filename, 'r')
-        target = np.array(hf.get('density'))
-        hf.close()
+        with pil.open(tir_filename) as img:
+            tir = np.array(img.split[0])
+        data = np.concatenate((data, tir.reshape(*tir.shape[:], 1)), axis=2)
+        target = scipy.sparse.load_npz(target_filename).toarray()
         if self.train_transforms:
             data, target = self.train_transforms(data, target)
 
@@ -104,16 +106,21 @@ def make_dataframe(folder):
     @param folder: the path folder from where build the dataframe
     @return: a DataFrame with columns (example folder, example idx, filename, gt filename)
     """
-    folders = os.listdir(folder)
+    rgb_folder = os.path.join(folder, 'RGB')
+    tir_folder = os.path.join(folder, 'TIR')
+    gt_folder = os.path.join(folder, 'GT_')
+    folders = os.listdir(rgb_folder)
     dataset = []
     for cur_folder in folders:
-        files = os.listdir(os.path.join(folder, cur_folder))
+        files = os.listdir(os.path.join(rgb_folder, cur_folder))
         for file in files:
             if cfg_data.FILE_EXTENSION in file:
                 idx, ext = file.split('.')
-                gt = os.path.join(folder, cur_folder,
+                gt = os.path.join(gt_folder, cur_folder,
                                   idx + re.sub(', |\(|\)|\[|\]', '_', str(cfg_data.SIZE)) + cfg_data.GT_FILE_EXTENSION)
-                dataset.append([idx, os.path.join(folder, cur_folder, file), gt])
+                tir = os.path.join(tir_folder, cur_folder,
+                                  idx + 'R' + cfg_data.FILE_EXTENSION)
+                dataset.append([idx, os.path.join(folder, cur_folder, file), tir, gt])
     return pd.DataFrame(dataset, columns=['id', 'filename', 'tir_filename', 'gt_filename'])
 
 

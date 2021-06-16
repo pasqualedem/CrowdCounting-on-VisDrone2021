@@ -9,24 +9,11 @@ class RandomHorizontallyFlip(object):
     """
     Data augmentation class for flipping an image and its ground truth with 0.5 probability
     """
-    def __call__(self, img, mask, bbx=None):
-        if not(issubclass(type(img), Image.Image)):
-            img = Image.fromarray(img)
-        if not(issubclass(type(mask), Image.Image)):
-            mask = Image.fromarray(mask)
+    def __call__(self, *imgs):
+        imgs = [Image.fromarray(img) if not(issubclass(type(img), Image.Image)) else img for img in imgs]
 
         if np.random.random() < 0.5:
-            if bbx is None:
-                return img.transpose(Image.FLIP_LEFT_RIGHT), mask.transpose(Image.FLIP_LEFT_RIGHT)
-            w, h = img.size
-            xmin = w - bbx[:, 3]
-            xmax = w - bbx[:, 1]
-            bbx[:, 1] = xmin
-            bbx[:, 3] = xmax
-            return img.transpose(Image.FLIP_LEFT_RIGHT), mask.transpose(Image.FLIP_LEFT_RIGHT), bbx
-        if bbx is None:
-            return img, mask
-        return img, mask, bbx
+            return [img.transpose(Image.FLIP_LEFT_RIGHT) for img in imgs]
 
 
 class RandomGammaCorrection(object):

@@ -1,14 +1,14 @@
 import numpy as np
 import os
 import time
-
 import torch
-from torch import nn
 
 from tensorboardX import SummaryWriter
 
+
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given number of consecutive epochs"""
+
     def __init__(self, patience=1, delta=1e-4):
         """
         Instantiate an EarlyStopping object.
@@ -45,102 +45,56 @@ class EarlyStopping:
         return self.should_stop
 
 
-def initialize_weights(models):
-    for model in models:
-        real_init_weights(model)
+class TrainLogger:
+    def __init__(self, exp_path, exp_name):
+        if not os.path.exists(exp_path):
+            os.mkdir(exp_path)
+        self.writer = SummaryWriter(exp_path + '/' + exp_name)
+        self.log = exp_path + '/' + exp_name + '/' + exp_name + '.txt'
 
+        cfg_file = open('./config.py', "r")
+        cfg_lines = cfg_file.readlines()
 
-def real_init_weights(m):
-    if isinstance(m, list):
-        for mini_m in m:
-            real_init_weights(mini_m)
-    else:
-        if isinstance(m, nn.Conv2d):
-            nn.init.normal_(m.weight, std=0.01)
-            if m.bias is not None:
-                nn.init.constant_(m.bias, 0)
-        elif isinstance(m, nn.Linear):
-            m.weight.data.normal_(0.0, std=0.01)
-        elif isinstance(m, nn.BatchNorm2d):
-            nn.init.constant_(m.weight, 1)
-            nn.init.constant_(m.bias, 0)
-        elif isinstance(m, nn.Module):
-            for mini_m in m.children():
-                real_init_weights(mini_m)
-        else:
-            print(m)
+        with open(self.log, 'a') as f:
+            f.write(''.join(cfg_lines) + '\n\n\n\n')
 
+        self.best = False
 
-def weights_normal_init(*models):
-    for model in models:
-        dev = 0.01
-        if isinstance(model, list):
-            for m in model:
-                weights_normal_init(m, dev)
-        else:
-            for m in model.modules():
-                if isinstance(m, nn.Conv2d):
-                    m.weight.data.normal_(0.0, dev)
-                    if m.bias is not None:
-                        m.bias.data.fill_(0.0)
-                elif isinstance(m, nn.Linear):
-                    m.weight.data.normal_(0.0, dev)
+    def update_model(self, state_dict, epoch, exp_path, exp_name, scores, train_record):
+        self.best = False
 
+        self.writer.add_scalar('val_loss', state_dict['val_loss'], epoch)
+        for key in scores:
+            self.writer.add_scalar(key, scores[key], epoch)
 
-def logger(exp_path, exp_name):
-    if not os.path.exists(exp_path):
-        os.mkdir(exp_path)
-    writer = SummaryWriter(exp_path + '/' + exp_name)
-    log_file = exp_path + '/' + exp_name + '/' + exp_name + '.txt'
+        snapshot_name = 'ep_%d' % epoch
+        for key in scores:
+            snapshot_name += '_' + key + '_%.1f' % scores[key]
 
-    cfg_file = open('./config.py', "r")
-    cfg_lines = cfg_file.readlines()
+        if state_dict['val_loss'] < train_record['best_val_loss']:
+            train_record['best_model_name'] = snapshot_name
+            train_record['best_val_loss'] = state_dict['val_loss']
+            torch.save(state_dict, os.path.join(exp_path, exp_name, snapshot_name + '.pth'))
 
-    with open(log_file, 'a') as f:
-        f.write(''.join(cfg_lines) + '\n\n\n\n')
+        for key in scores:
+            if scores[key] < train_record[key]:
+                train_record[key] = scores[key]
 
-    return writer, log_file
+        return train_record
 
+    def summary(self, epoch, scores, timers):
+        mae, mse, loss = scores
+        out = ('Epoch ' + str(epoch) + ' | ')
+        out += ('    [mae %.2f mse %.2f], [val loss %.4f] [forward time %.2f] [train/valid time %.2f / %.2f] --- '
+                % (mae, mse, loss,
+                   timers['inference time'].average_time * 1000,
+                   timers['train time'].diff,
+                   timers['val time'].diff))
+        if self.best:
+            out += "[BEST]"
 
-def logger_txt(log_file, epoch, scores):
-    mae, mse, loss = scores
-
-    snapshot_name = 'all_ep_%d_mae_%.1f_mse_%.1f' % (epoch + 1, mae, mse)
-
-    with open(log_file, 'a') as f:
-        f.write('=' * 15 + '+' * 15 + '=' * 15 + '\n\n')
-        f.write(snapshot_name + '\n')
-        f.write('    [mae %.2f mse %.2f], [val loss %.4f]\n' % (mae, mse, loss))
-        f.write('=' * 15 + '+' * 15 + '=' * 15 + '\n\n')
-
-
-def print_summary(epoch, scores, train_record, for_time, train_time, val_time):
-    mae, mse, loss = scores
-    print('Epoch ' + str(epoch) + ' | ', end='')
-    print('    [mae %.2f mse %.2f], [val loss %.4f] [forward time %.2f] [train/valid time %.2f / %.2f] --- '
-          % (mae, mse, loss, for_time, train_time, val_time),
-          end='')
-    print('[best] [model: %s] , [mae %.2f], [mse %.2f]' % (train_record['best_model_name'],
-                                                           train_record['best_mae'],
-                                                           train_record['best_rmse']))
-
-
-def update_model(state_dict, epoch, exp_path, exp_name, scores, train_record, log_file):
-    mae, rmse, loss = scores
-
-    snapshot_name = 'all_ep_%d_mae_%.1f_rmse_%.1f' % (epoch + 1, mae, rmse)
-    logger_txt(log_file, epoch, scores)
-
-    if mae < train_record['best_mae'] or rmse < train_record['best_rmse']:
-        train_record['best_model_name'] = snapshot_name
-        torch.save(state_dict, os.path.join(exp_path, exp_name, snapshot_name + '.pth'))
-
-    if mae < train_record['best_mae']:
-        train_record['best_mae'] = mae
-    if rmse < train_record['best_rmse']:
-        train_record['best_rmse'] = rmse
-
-    return train_record
+        print(out)
+        self.log.write(out + '\n')
 
 
 class AverageMeter(object):
@@ -213,11 +167,3 @@ class Timer(object):
             return self.average_time
         else:
             return self.diff
-
-
-
-
-
-
-
-
