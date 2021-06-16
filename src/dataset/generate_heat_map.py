@@ -15,9 +15,9 @@ FILENAME_LEN = 0
 
 def generate_heatmap(df, img_size, wished_heatmap_size):
     """
-    Generate a dictionary of heatmaps
+    Generate a dictionary of heatmaps v2
 
-    @param df: dataframe of columns [frame, x, y]
+    @param df: dataframe of columns [x, y]
     @param img_size: original size of the image
     @param wished_heatmap_size: parameter for resizing the heatmap
     @return:
@@ -38,7 +38,6 @@ def generate_heatmap(df, img_size, wished_heatmap_size):
 def make_ground_truth(folder, img_folder, name_rule, img_rule, dataframe_fun, size=None):
     """
     Generate the ground truth h5 files
-
     :param folder: The folder where the annotations are stored
     :param img_folder: The folder where the images are stored
     :param name_rule: rule for including annotations files based on their name
@@ -46,23 +45,56 @@ def make_ground_truth(folder, img_folder, name_rule, img_rule, dataframe_fun, si
     :param dataframe_fun: function that returns a [frame, x, y] dataframe given the annotation file name
     :param size: wished size of heatmap
     """
-    gt_files = os.listdir(folder)
-    gt_files = list(filter(name_rule, gt_files))
+    gt_folders = os.listdir(folder)
 
-    for gt in tqdm(gt_files):
-        fname, ext = gt.split('.')
-        frame_id = img_rule(fname)
-        img_size = plt.imread(os.path.join(img_folder, frame_id)).shape[:2]
+    for f in tqdm(gt_folders):
+        gt_files = os.listdir(os.path.join(folder, f))
+        gt_files = list(filter(name_rule, gt_files))
 
-        if size is None:
-            size = img_size
-        df = dataframe_fun(os.path.join(folder, gt))
-        heatmap = generate_heatmap(df, img_size, size)
+        for gt in gt_files:
+            fname, ext = gt.split('.')
+            frame_id = img_rule(fname)
+            img_size = plt.imread(os.path.join(os.path.join(img_folder, f), frame_id)).shape[:2]
 
-        sparse.save_npz(os.path.join(
-            img_folder,
-            (fname + '_' + str(size) + '.npz')),
-            sparse.csr_matrix(heatmap))
+            if size is None:
+                size = img_size
+            df = dataframe_fun(os.path.join(os.path.join(folder, f), gt))
+            heatmap = generate_heatmap(df, img_size, size)
+
+            sparse.save_npz(os.path.join(
+                os.path.join(img_folder, f),
+                (fname.split('R')[0] + '_' + str(size) + '.npz')),
+                sparse.csr_matrix(heatmap))
+
+
+# def make_ground_truth(folder, img_folder, name_rule, img_rule, dataframe_fun, size=None):
+#     """
+#     Generate the ground truth h5 files v2
+#
+#     :param folder: The folder where the annotations are stored
+#     :param img_folder: The folder where the images are stored
+#     :param name_rule: rule for including annotations files based on their name
+#     :param img_rule: rule for obtaining the img name file from the folder and annotation name file
+#     :param dataframe_fun: function that returns a [frame, x, y] dataframe given the annotation file name
+#     :param size: wished size of heatmap
+#     """
+#     gt_files = os.listdir(folder)
+#     gt_files = list(filter(name_rule, gt_files))
+#
+#     for gt in tqdm(gt_files):
+#         fname, ext = gt.split('.')
+#         frame_id = img_rule(fname)
+#         img_size = plt.imread(os.path.join(img_folder, frame_id)).shape[:2]
+#
+#         if size is None:
+#             size = img_size
+#         df = dataframe_fun(os.path.join(folder, gt))
+#         heatmap = generate_heatmap(df, img_size, size)
+#
+#         sparse.save_npz(os.path.join(
+#             img_folder,
+#             (fname + '_' + str(size) + '.npz')),
+#             sparse.csr_matrix(heatmap))
 
 
 def dataframe_load_test(filename):
@@ -104,6 +136,8 @@ def dataframe_load_train(filename):
 if __name__ == '__main__':
     train_rule = lambda x: '.xml' in x
     test_rule = lambda x: '_clean.txt' in x
+
+    # img_train_rule = lambda x, y: os.path.join(x, y)
 
     img_train_rule = lambda x: x.replace('R', '.jpg')
     img_test_rule = lambda x, y: os.path.join(x, y)
