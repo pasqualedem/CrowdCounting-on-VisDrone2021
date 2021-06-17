@@ -2,6 +2,7 @@ import numpy as np
 import os
 import time
 import torch
+import json
 
 from tensorboardX import SummaryWriter
 
@@ -46,17 +47,14 @@ class EarlyStopping:
 
 
 class TrainLogger:
-    def __init__(self, exp_path, exp_name):
+    def __init__(self, exp_path, exp_name, cfg):
         if not os.path.exists(exp_path):
             os.mkdir(exp_path)
         self.writer = SummaryWriter(exp_path + '/' + exp_name)
         self.log = exp_path + '/' + exp_name + '/' + exp_name + '.txt'
 
-        cfg_file = open('./config.py', "r")
-        cfg_lines = cfg_file.readlines()
-
         with open(self.log, 'a') as f:
-            f.write(''.join(cfg_lines) + '\n\n\n\n')
+            f.write(''.join(json.dumps(cfg, indent=4, sort_keys=True)) + '\n\n\n\n')
 
         self.best = False
 

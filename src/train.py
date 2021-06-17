@@ -44,7 +44,7 @@ class Trainer:
 
         self.train_record = {'best_val_mae': 1e20, 'best_val_rmse': 1e20, 'best_val_loss': 1e20, 'best_model_name': ''}
         self.timer = {'iter time': Timer(), 'train time': Timer(), 'val time': Timer(), 'inference time': Timer()}
-        self.logger = TrainLogger(self.exp_path, self.exp_name)
+        self.logger = TrainLogger(self.exp_path, self.exp_name, cfg)
 
         self.i_tb = 0
 
