@@ -14,6 +14,7 @@ import transformations as trans
 cfg_data = EasyDict()
 
 cfg_data.SIZE = (512, 640)
+cfg_data.CHANNELS = 4
 cfg_data.FILE_EXTENSION = '.jpg'
 cfg_data.GT_FILE_EXTENSION = '.npz'
 cfg_data.LOG_PARA = 2550.0
@@ -141,8 +142,8 @@ def load_train_val():
 
     @return: the train and validation DataLoader
     """
-    train_df = make_dataframe('../../datasets/VisDrone2021/Train')
-    valid_df = make_dataframe('../../datasets/VisDrone2021/Val')
+    train_df = make_dataframe('../datasets/VisDrone2021/Train')
+    valid_df = make_dataframe('../datasets/VisDrone2021/Val')
 
     # df = make_dataframe('../dataset/VisDrone2020-CC/train')
     # # Split the dataframe in train and validation

@@ -14,6 +14,7 @@ class RandomHorizontallyFlip(object):
 
         if np.random.random() < 0.5:
             return [img.transpose(Image.FLIP_LEFT_RIGHT) for img in imgs]
+        return imgs
 
 
 class RandomGammaCorrection(object):

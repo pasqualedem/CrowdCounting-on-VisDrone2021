@@ -77,8 +77,8 @@ class TrainLogger:
             torch.save(state_dict, os.path.join(exp_path, exp_name, snapshot_name + '.pth'))
 
         for key in scores:
-            if scores[key] < train_record[key]:
-                train_record[key] = scores[key]
+            if scores[key] < train_record['best_' + key]:
+                train_record['best_' + key] = scores[key]
 
         return train_record
 
@@ -94,7 +94,8 @@ class TrainLogger:
             out += "[BEST]"
 
         print(out)
-        self.log.write(out + '\n')
+        with open(self.log, 'a') as f:
+            f.write(out + '\n')
 
 
 class AverageMeter(object):

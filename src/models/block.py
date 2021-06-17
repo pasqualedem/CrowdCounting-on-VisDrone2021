@@ -19,8 +19,9 @@ class CRPBlock(nn.Module):
 
     def __init__(self, in_planes, out_planes, n_stages):
         super(CRPBlock, self).__init__()
+        self.point_convs = nn.ModuleList()
         for i in range(n_stages):
-            setattr(self, '{}_{}'.format(i + 1, 'outvar_dimred'),
+            self.point_convs.append(
                     conv1x1(in_planes if (i == 0) else out_planes,
                             out_planes, stride=1,
                             bias=False))
@@ -30,9 +31,9 @@ class CRPBlock(nn.Module):
 
     def forward(self, x):
         top = x
-        for i in range(self.n_stages):
+        for conv in self.point_convs:
             top = self.maxpool(top)
-            top = getattr(self, '{}_{}'.format(i + 1, 'outvar_dimred'))(top)
+            top = conv(top)
             x = top + x
         return x
 

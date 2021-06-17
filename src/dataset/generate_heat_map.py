@@ -116,6 +116,6 @@ if __name__ == '__main__':
     train = [train_rule, img_train_rule, dataframe_load_train, size]
     test = [test_rule, img_test_rule, dataframe_load_test, size]
 
-    make_ground_truth('../../datasets/VisDrone2021/Train/GT_',
-                      '../../datasets/VisDrone2021/Train/RGB',
+    make_ground_truth('../../datasets/VisDrone2021/Val/GT_',
+                      '../../datasets/VisDrone2021/Val/RGB',
                       *train)

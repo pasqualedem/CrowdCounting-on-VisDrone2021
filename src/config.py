@@ -10,7 +10,7 @@ __C.SEED = 3035  # random seed
 __C.TRAIN_BATCH_SIZE = 4
 __C.VAL_BATCH_SIZE = 6
 __C.TEST_BATCH_SIZE = 6
-__C.N_WORKERS = 2
+__C.N_WORKERS = 1
 
 # Training settings
 __C.RESUME = False
@@ -21,11 +21,20 @@ __C.DATASET = 'VisDrone'
 __C.DETAILS = '_1080x1920_NVS'
 
 # Net settings
-__C.NET = 'MobileCount'
+__C.ENCODER = 'MobileCount'
+# For MobileCount
 __C.VERSION = ''
-__C.KNOWN_MODEL = None
-__C.PRETRAINED = False
-__C.ENCODER = None  # Used only when NET is DoubleEncoderMobileCount
+__C.CHANNELS = 4
+# For known models
+__C.PRETRAINED = True
+
+# Possible second encoder
+__C.ENCODER_TIR = None
+# For MobileCount
+__C.VERSION_TIR = 'x4'
+__C.CHANNELS_TIR = 1
+# For known models
+__C.PRETRAINED_TIR = False
 
 # learning optimizer settings
 __C.LR = 1e-4  # learning rate
@@ -57,11 +66,11 @@ __C.PRINT_FREQ = 10
 
 now = time.strftime("%m-%d_%H-%M", time.localtime())
 
-__C.NETNAME = __C.NET + __C.VERSION \
-              + (__C.KNOWN_MODEL if __C.KNOWN_MODEL else '') \
+__C.NETNAME = __C.ENCODER + __C.VERSION \
               + ('_freeze_' if __C.PRETRAINED else '') \
-              + (__C.ENCODER if __C.ENCODER else '') \
-
+              + (__C.ENCODER_TIR if __C.ENCODER_TIR else '') \
+              + (__C.VERSION_TIR if __C.VERSION_TIR else '') \
+              + (__C.PRETRAINED_TIR if __C.PRETRAINED_TIR else '')
 
 __C.EXP_NAME = now \
                + '_' + __C.DATASET \

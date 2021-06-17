@@ -1,33 +1,54 @@
 import torch
-import torch.nn as nn
-from models.MobileCountVis import MobileCount, PretrainedMobileCount, DoubleEncoderMobileCount
+from models.MobileCountVis import *
 MBVersions = {
     'x0_5': [16, 32, 64, 128],
     'x0_75': [32, 48, 80, 160],
     '': [32, 64, 128, 256],
     'x1_25': [64, 96, 160, 320],
     'x2': [64, 128, 256, 512],
+    'x4': [256, 512, 1024, 2048]
 }
 
 # Dict that select which parameter pass to the class for each network
 Nets = {
-    'Pretrained': (PretrainedMobileCount, ['KNOWN_MODEL', 'PRETRAINED']),
-    'MobileCount': (MobileCount, ['VERSION']),
-    'DoubleEncoder': (DoubleEncoderMobileCount, ['ENCODER', 'KNOWN_MODEL', 'PRETRAINED', 'VERSION'])
+    'Pretrained': (PretrainedEncoder, ['ENCODER', 'PRETRAINED']),
+    'MobileCount': (LWEncoder, ['CHANNELS'])
 }
+
+
+def choose_encoder(model_args):
+    try:
+        model, key_args = Nets[model_args['ENCODER']]
+    except KeyError:
+        model, key_args = Nets['Pretrained']
+
+    args = []
+    if model == LWEncoder:
+        args = [(MBVersions[model_args.pop('VERSION')])]
+
+    args = args + [model_args[arg] for arg in key_args]
+
+    return model, args
 
 
 def choose_model(model_args):
     """
-    Choose which model to use and isntantiate it passing the args
+    Choose which model to use and instantiate it passing the args
     :param model_args: Dict of args that contain NET key and related arguments
-    :return: The instatiated network
+    :return: The instantiated network
     """
-    model, args = Nets[model_args.pop('NET')]
-    if model == 'DoubleEncoder':
-        encoder, args = Nets[model_args.pop('ENCODER')]
-        return model(encoder, *[model_args[arg] for arg in args])
-    return model(*[model_args[arg] for arg in args])
+    model, args = choose_encoder(model_args)
+
+    if model_args['ENCODER_TIR']:
+        tir_encoder_dict = {arg.replace('_TIR', ''): model_args[arg] for arg in model_args if '_TIR' in arg}
+        tir_encoder, tir_args = choose_encoder(tir_encoder_dict)
+        encoder_rgb = model
+        return DoubleEncoderMobileCount([encoder_rgb,
+                                         args,
+                                         tir_encoder,
+                                         tir_args])
+
+    return SingleEncoderMobileCount(model, args)
 
 
 class CrowdCounter(nn.Module):

@@ -72,7 +72,7 @@ class PretrainedEncoder(Encoder):
     def __init__(self, model_name, pretrained):
         super().__init__()
         print('load the pre-trained model.')
-        net = getattr(models, model_name)(True)
+        net = getattr(models, model_name)(pretrained)
         self.conv1 = net.conv1
         self.bn1 = net.bn1
         self.relu = nn.ReLU(inplace=True)
@@ -94,7 +94,7 @@ class PretrainedEncoder(Encoder):
 
 
 class LWEncoder(Encoder):
-    def __init__(self, layer_sizes):
+    def __init__(self, layer_sizes, input_channels):
         super().__init__()
         block = Bottleneck
         repetitions = [1, 2, 3, 4]
@@ -102,13 +102,13 @@ class LWEncoder(Encoder):
         strides = [1, 2, 2, 2]
         self.inplanes = layer_sizes[0]
 
-        self.conv1 = nn.Conv2d(3, layer_sizes[0], kernel_size=3, stride=2, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(input_channels, layer_sizes[0], kernel_size=3, stride=2, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(layer_sizes[0])
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
-        self.layers = \
-            [self._make_layer(block, layer_sizes[i], repetitions[i], strides[i], expansion[i]) for i in range(4)]
+        self.layers = nn.ModuleList(
+            [self._make_layer(block, layer_sizes[i], repetitions[i], strides[i], expansion[i]) for i in range(4)])
         self.layer_sizes = layer_sizes
 
     def _make_layer(self, block, planes, blocks, stride, expansion):
@@ -130,16 +130,19 @@ class LWEncoder(Encoder):
         return nn.Sequential(*layers)
 
 
-class DoubleEncoder(nn.Module):
-    def __init__(self, encoder: Encoder, args):
+class DoubleEncoder(Encoder):
+    def __init__(self, encoder_rgb: Encoder, rgb_args, encoder_tir: Encoder, tir_args):
         super().__init__()
-        self.encoder_rgb = encoder(*args)
-        self.encoder_tir = encoder(*args)
+        self.encoder_rgb = encoder_rgb(*rgb_args)
+        self.encoder_tir = encoder_tir(*tir_args)
+        if self.encoder_rgb.get_layer_sizes() != self.encoder_tir.get_layer_sizes():
+            raise Exception('The two encoders must have the same output layer sizes!')
+        self.layer_sizes = self.encoder_rgb.get_layer_sizes()
 
     def forward(self, x):
-        rgb_out = self.encoder_rgb(x[0:3])
-        tir_out = self.encoder_tir(x[3])
-        return rgb_out + tir_out
+        rgb_out = self.encoder_rgb(x[:, 0:3])
+        tir_out = self.encoder_tir(x[:, 3:])
+        return (mid1 + mid2 for mid1, mid2 in zip(rgb_out, tir_out))
 
 
 def _make_crp(in_planes, out_planes, stages):
@@ -202,24 +205,17 @@ class Decoder(nn.Module):
         return x1
 
 
-class MobileCount(MobileCountBase):
-    def __init__(self, layer_sizes):
-        encoder = LWEncoder(layer_sizes)
-        decoder = Decoder(layer_sizes)
-        super().__init__(layer_sizes, encoder, decoder)
-
-
-class PretrainedMobileCount(MobileCountBase):
-    def __init__(self, model_name, pretrained):
-        encoder = PretrainedEncoder(model_name, pretrained)
-        decoder = Decoder(encoder.layer_sizes)
+class SingleEncoderMobileCount(MobileCountBase):
+    def __init__(self, encoder, encoder_params):
+        encoder = encoder(*encoder_params)
+        decoder = Decoder(encoder.get_layer_sizes())
 
         super().__init__(encoder.get_layer_sizes(), encoder, decoder)
 
 
 class DoubleEncoderMobileCount(MobileCountBase):
-    def __init__(self, encoder, encoder_params):
-        encoder = encoder(*encoder_params)
+    def __init__(self, encoder_params):
+        encoder = DoubleEncoder(*encoder_params)
         decoder = Decoder(encoder.layer_sizes)
 
         super().__init__(encoder.get_layer_sizes(), encoder, decoder)

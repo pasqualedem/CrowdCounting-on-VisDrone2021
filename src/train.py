@@ -1,3 +1,4 @@
+import torch
 from torch import optim
 from torch.optim.lr_scheduler import StepLR
 
@@ -26,8 +27,7 @@ class Trainer:
         self.exp_name = cfg.EXP_NAME
         self.exp_path = cfg.EXP_PATH
 
-        self.net_name = cfg.NET
-        self.net = net_fun()
+        self.net = net_fun().to(cfg.DEVICE)
 
         self.optimizer = optimizers[cfg.OPTIM[0]](self.net.parameters(), **cfg.OPTIM[1])
         self.scheduler = StepLR(self.optimizer, step_size=cfg.NUM_EPOCH_LR_DECAY, gamma=cfg.LR_DECAY)
@@ -42,7 +42,7 @@ class Trainer:
             self.epoch = checkpoint['epoch']
             self.val_loss = checkpoint['val_loss']
 
-        self.train_record = {'best_mae': 1e20, 'best_rmse': 1e20, 'best_val_loss': 1e20, 'best_model_name': ''}
+        self.train_record = {'best_val_mae': 1e20, 'best_val_rmse': 1e20, 'best_val_loss': 1e20, 'best_model_name': ''}
         self.timer = {'iter time': Timer(), 'train time': Timer(), 'val time': Timer(), 'inference time': Timer()}
         self.logger = TrainLogger(self.exp_path, self.exp_name)
 
@@ -50,7 +50,8 @@ class Trainer:
 
         self.train_loader, self.val_loader = dataloader()
 
-        self.logger.writer.add_graph(self.net, self.train_loader.dataset.__getitem__(0))
+        with torch.no_grad():
+            self.logger.writer.add_graph(self.net, self.train_loader.dataset.__getitem__(0)[0].unsqueeze(0).cuda())
 
     def train(self):
         """
@@ -166,6 +167,7 @@ class Trainer:
         mae = maes.avg
         rmse = np.sqrt(mses.avg)
         self.val_loss = losses.avg
+        scores = {'val_mae': mae, 'val_rmse': rmse}
 
         self.train_record = self.logger.update_model({'model_state_dict': self.net.state_dict(),
                                                       'optimizer_state_dict': self.optimizer.state_dict(),
@@ -174,7 +176,8 @@ class Trainer:
                                                       'val_loss': self.val_loss
                                                       },
                                                      self.epoch, self.exp_path, self.exp_name,
-                                                     [mae, rmse, self.val_loss], self.train_record)
+                                                     scores,
+                                                     self.train_record)
 
         self.logger.summary(self.epoch,
                             [mae, rmse, self.val_loss],
