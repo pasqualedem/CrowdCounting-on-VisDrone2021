@@ -138,13 +138,15 @@ class DoubleEncoder(Encoder):
         self.encoder_tir = encoder_tir(*tir_args)
         # if self.encoder_rgb.get_layer_sizes() != self.encoder_tir.get_layer_sizes():
         #     raise Exception('The two encoders must have the same output layer sizes!')
-        self.layer_sizes = self.encoder_rgb.get_layer_sizes() + self.encoder_tir.get_layer_sizes()
+        self.layer_sizes = [out_rgb + out_tir for
+                            out_rgb, out_tir in
+                            zip(self.encoder_rgb.get_layer_sizes(), self.encoder_tir.get_layer_sizes())]
 
     def forward(self, x):
         rgb_out = self.encoder_rgb(x[:, 0:3])
         tir_out = self.encoder_tir(x[:, 3:])
         # return (mid1 + mid2 for mid1, mid2 in zip(rgb_out, tir_out))
-        return (torch.hstack((mid1 + mid2)) for mid1, mid2 in zip(rgb_out, tir_out))
+        return (torch.hstack((mid1, mid2)) for mid1, mid2 in zip(rgb_out, tir_out))
 
 
 def _make_crp(in_planes, out_planes, stages):

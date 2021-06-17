@@ -21,7 +21,7 @@ __C.DATASET = 'VisDrone'
 __C.DETAILS = '_1080x1920_NVS'
 
 # Net settings
-__C.ENCODER = 'MobileCount'
+__C.ENCODER = 'resnet50'
 # For MobileCount
 __C.VERSION = ''
 __C.CHANNELS = 4
@@ -29,9 +29,9 @@ __C.CHANNELS = 4
 __C.PRETRAINED = True
 
 # Possible second encoder
-__C.ENCODER_TIR = None
+__C.ENCODER_TIR = 'MobileCount'
 # For MobileCount
-__C.VERSION_TIR = 'x4'
+__C.VERSION_TIR = 'x2'
 __C.CHANNELS_TIR = 1
 # For known models
 __C.PRETRAINED_TIR = False
