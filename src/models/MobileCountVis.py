@@ -1,4 +1,5 @@
 """RefineNet-LightWeight. No RCU, only LightWeight-CRP block."""
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from models.block import Bottleneck, CRPBlock, conv1x1, conv3x3, FusionBlock
@@ -135,14 +136,15 @@ class DoubleEncoder(Encoder):
         super().__init__()
         self.encoder_rgb = encoder_rgb(*rgb_args)
         self.encoder_tir = encoder_tir(*tir_args)
-        if self.encoder_rgb.get_layer_sizes() != self.encoder_tir.get_layer_sizes():
-            raise Exception('The two encoders must have the same output layer sizes!')
-        self.layer_sizes = self.encoder_rgb.get_layer_sizes()
+        # if self.encoder_rgb.get_layer_sizes() != self.encoder_tir.get_layer_sizes():
+        #     raise Exception('The two encoders must have the same output layer sizes!')
+        self.layer_sizes = self.encoder_rgb.get_layer_sizes() + self.encoder_tir.get_layer_sizes()
 
     def forward(self, x):
         rgb_out = self.encoder_rgb(x[:, 0:3])
         tir_out = self.encoder_tir(x[:, 3:])
-        return (mid1 + mid2 for mid1, mid2 in zip(rgb_out, tir_out))
+        # return (mid1 + mid2 for mid1, mid2 in zip(rgb_out, tir_out))
+        return (torch.hstack((mid1 + mid2)) for mid1, mid2 in zip(rgb_out, tir_out))
 
 
 def _make_crp(in_planes, out_planes, stages):
