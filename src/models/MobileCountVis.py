@@ -69,6 +69,15 @@ class Encoder(nn.Module):
         return self.layer_sizes
 
 
+def get_layer_sizes(layers, model_name):
+    last_conv = -3
+    if model_name == 'resnet34':
+        last_conv = -2
+
+    return [list(list(layer.named_children())[-1][1].named_children())[last_conv][1].out_channels
+     for layer in layers]
+
+
 class PretrainedEncoder(Encoder):
     def __init__(self, model_name, pretrained):
         super().__init__()
@@ -84,8 +93,7 @@ class PretrainedEncoder(Encoder):
         self.layers.append(net.layer3)
         self.layers.append(net.layer4)
 
-        self.layer_sizes = [list(list(layer.named_children())[-1][1].named_children())[-3][1].out_channels
-                            for layer in self.layers]
+        self.layer_sizes = get_layer_sizes(self.layers, model_name)
 
         if pretrained:
             for param in self.parameters():

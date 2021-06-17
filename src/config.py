@@ -7,7 +7,7 @@ cfg = __C
 __C.SEED = 3035  # random seed
 
 # System settings
-__C.TRAIN_BATCH_SIZE = 4
+__C.TRAIN_BATCH_SIZE = 8
 __C.VAL_BATCH_SIZE = 6
 __C.TEST_BATCH_SIZE = 6
 __C.N_WORKERS = 1
@@ -17,21 +17,21 @@ __C.RESUME = False
 
 # path settings
 __C.EXP_PATH = '../exp'
-__C.DATASET = 'VisDrone'
-__C.DETAILS = '_1080x1920_NVS'
+__C.DATASET = 'VisDrone2021'
+__C.DETAILS = ''
 
 # Net settings
-__C.ENCODER = 'resnet50'
+__C.ENCODER = 'MobileCount'
 # For MobileCount
-__C.VERSION = ''
+__C.VERSION = 'x0_75'
 __C.CHANNELS = 4
 # For known models
-__C.PRETRAINED = True
+__C.PRETRAINED = False
 
 # Possible second encoder
-__C.ENCODER_TIR = 'MobileCount'
+__C.ENCODER_TIR = None
 # For MobileCount
-__C.VERSION_TIR = 'x2'
+__C.VERSION_TIR = None
 __C.CHANNELS_TIR = 1
 # For known models
 __C.PRETRAINED_TIR = False
