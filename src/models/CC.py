@@ -62,7 +62,7 @@ class Encoder(nn.Module):
         l3 = self.layers[2](l2)
         l4 = self.layers[3](l3)
 
-        return l1, l2, l3, l4
+        return [l1, l2, l3, l4]
 
     def get_layer_sizes(self):
         return self.layer_sizes
@@ -77,17 +77,17 @@ class DoubleEncoder(Encoder):
         #     raise Exception('The two encoders must have the same output layer sizes!')
         self.layer_sizes = [out_rgb + out_tir for
                             out_rgb, out_tir in
-                            zip(get_layer_sizes(), get_layer_sizes())]
+                            zip(self.encoder_rgb.get_layer_sizes(), self.encoder_rgb.get_layer_sizes())]
 
     def forward(self, x):
         rgb_out = self.encoder_rgb(x[:, 0:3])
         tir_out = self.encoder_tir(x[:, 3:])
         # return (mid1 + mid2 for mid1, mid2 in zip(rgb_out, tir_out))
-        return (torch.hstack((mid1, mid2)) for mid1, mid2 in zip(rgb_out, tir_out))
+        return [torch.hstack((mid1, mid2)) for mid1, mid2 in zip(rgb_out, tir_out)]
 
 
 class PretrainedEncoder(Encoder):
-    def __init__(self, model_name, pretrained):
+    def __init__(self, model_name, pretrained, channels=None):
         super().__init__()
         print('load the pre-trained model.')
         net = getattr(models, model_name)(pretrained)
@@ -101,6 +101,7 @@ class PretrainedEncoder(Encoder):
         self.layers.append(net.layer3)
         self.layers.append(net.layer4)
 
+        self.channels = channels
         self.layer_sizes = get_layer_sizes(self.layers, model_name)
 
         if pretrained:
@@ -109,11 +110,16 @@ class PretrainedEncoder(Encoder):
                 self.pretrained = True
             self.train(False)
 
+    def forward(self, x):
+        if self.channels != x.shape[1]:
+            x = x.repeat(1, self.channels, 1, 1)
+        return super().forward(x)
+
 
 def get_layer_sizes(layers, model_name):
     last_conv = -3
-    if model_name == 'resnet34':
+    if model_name == 'resnet34' or model_name == 'resnet18':
         last_conv = -2
 
     return [list(list(layer.named_children())[-1][1].named_children())[last_conv][1].out_channels
-     for layer in layers]
+            for layer in layers]

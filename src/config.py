@@ -27,18 +27,18 @@ __C.NET.PREDICTOR = "SASNet"
 __C.NET.BLOCK_SIZE = 32  # SASNet block size setting
 
 # ENCODER
-__C.NET.ENCODER = 'LWEncoder'
+__C.NET.ENCODER = 'resnet18'
 # For MobileCount
 __C.NET.VERSION = ''
-__C.NET.CHANNELS = 4
+__C.NET.CHANNELS = 3
 # For known models
 __C.NET.PRETRAINED = False
 
 # Possible second encoder
-__C.NET.ENCODER_TIR = None
+__C.NET.ENCODER_TIR = 'resnet18'
 # For MobileCount
 __C.NET.VERSION_TIR = None
-__C.NET.CHANNELS_TIR = 1
+__C.NET.CHANNELS_TIR = 3
 # For known models
 __C.NET.PRETRAINED_TIR = False
 
