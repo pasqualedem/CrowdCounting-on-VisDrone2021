@@ -21,17 +21,17 @@ __C.DATASET = 'VisDrone2021'
 __C.DETAILS = ''
 
 # Net settings
-__C.ENCODER = 'MobileCount'
+__C.ENCODER = 'resnet18'
 # For MobileCount
-__C.VERSION = 'x0_75'
+__C.VERSION = 'x2'
 __C.CHANNELS = 4
 # For known models
-__C.PRETRAINED = False
+__C.PRETRAINED = True
 
 # Possible second encoder
-__C.ENCODER_TIR = None
+__C.ENCODER_TIR = 'MobileCount'
 # For MobileCount
-__C.VERSION_TIR = None
+__C.VERSION_TIR = ''
 __C.CHANNELS_TIR = 1
 # For known models
 __C.PRETRAINED_TIR = False

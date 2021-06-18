@@ -71,7 +71,7 @@ class Encoder(nn.Module):
 
 def get_layer_sizes(layers, model_name):
     last_conv = -3
-    if model_name == 'resnet34':
+    if model_name == 'resnet34' or model_name == 'resnet18':
         last_conv = -2
 
     return [list(list(layer.named_children())[-1][1].named_children())[last_conv][1].out_channels
