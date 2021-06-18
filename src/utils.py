@@ -77,6 +77,7 @@ class TrainLogger:
         for key in scores:
             if scores[key] < train_record['best_' + key]:
                 train_record['best_' + key] = scores[key]
+                self.best = True
 
         return train_record
 
@@ -90,6 +91,7 @@ class TrainLogger:
                    timers['val time'].diff))
         if self.best:
             out += "[BEST]"
+        self.best = False
 
         print(out)
         with open(self.log, 'a') as f:
