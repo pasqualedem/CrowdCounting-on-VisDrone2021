@@ -24,7 +24,7 @@ class Trainer:
 
         self.cfg_data = cfg_data
 
-        self.exp_name = cfg.EXP_NAME
+        self.exp_name = build_exp_name(cfg)
         self.exp_path = cfg.EXP_PATH
 
         self.net = net_fun().to(cfg.DEVICE)

@@ -1,64 +1,18 @@
 import torch
-from models.MobileCountVis import *
-MBVersions = {
-    'x0_5': [16, 32, 64, 128],
-    'x0_75': [32, 48, 80, 160],
-    '': [32, 64, 128, 256],
-    'x1_25': [64, 96, 160, 320],
-    'x2': [64, 128, 256, 512],
-    'x4': [256, 512, 1024, 2048]
-}
-
-# Dict that select which parameter pass to the class for each network
-Nets = {
-    'Pretrained': (PretrainedEncoder, ['ENCODER', 'PRETRAINED']),
-    'MobileCount': (LWEncoder, ['CHANNELS'])
-}
-
-
-def choose_encoder(model_args):
-    try:
-        model, key_args = Nets[model_args['ENCODER']]
-    except KeyError:
-        model, key_args = Nets['Pretrained']
-
-    args = []
-    if model == LWEncoder:
-        args = [(MBVersions[model_args.pop('VERSION')])]
-
-    args = args + [model_args[arg] for arg in key_args]
-
-    return model, args
-
-
-def choose_model(model_args):
-    """
-    Choose which model to use and instantiate it passing the args
-    :param model_args: Dict of args that contain NET key and related arguments
-    :return: The instantiated network
-    """
-    model, args = choose_encoder(model_args)
-
-    if model_args['ENCODER_TIR']:
-        tir_encoder_dict = {arg.replace('_TIR', ''): model_args[arg] for arg in model_args if '_TIR' in arg}
-        tir_encoder, tir_args = choose_encoder(tir_encoder_dict)
-        encoder_rgb = model
-        return DoubleEncoderMobileCount([encoder_rgb,
-                                         args,
-                                         tir_encoder,
-                                         tir_args])
-
-    return SingleEncoderMobileCount(model, args)
+import torch.nn as nn
+from torch import nn as nn
+from torchvision import models as models
 
 
 class CrowdCounter(nn.Module):
     """
     Container class for MobileCount networks
     """
-    def __init__(self, gpus, model_args):
+
+    def __init__(self, gpus, ccn):
         super(CrowdCounter, self).__init__()
 
-        self.CCN = choose_model(model_args)
+        self.CCN = ccn
         if len(gpus) > 1:
             self.CCN = torch.nn.DataParallel(self.CCN, device_ids=gpus).cuda()
         else:
@@ -88,3 +42,78 @@ class CrowdCounter(nn.Module):
         self.loss_mse = self.loss_mse_fn(density_map.squeeze(), gt_data.squeeze())
         return self.loss_mse
 
+
+class CrowdCounterNetwork(nn.Module):
+    def __init__(self, encoder, encoder_params, decoder, decoder_params):
+        super().__init__()
+        self.encoder = encoder(*encoder_params)
+        self.decoder = decoder(self.encoder.get_layer_sizes(), *decoder_params)
+
+
+class Encoder(nn.Module):
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+        l1 = self.layers[0](x)
+        l2 = self.layers[1](l1)
+        l3 = self.layers[2](l2)
+        l4 = self.layers[3](l3)
+
+        return l1, l2, l3, l4
+
+    def get_layer_sizes(self):
+        return self.layer_sizes
+
+
+class DoubleEncoder(Encoder):
+    def __init__(self, encoder_rgb: Encoder, rgb_args, encoder_tir: Encoder, tir_args):
+        super().__init__()
+        self.encoder_rgb = encoder_rgb(*rgb_args)
+        self.encoder_tir = encoder_tir(*tir_args)
+        # if self.encoder_rgb.get_layer_sizes() != self.encoder_tir.get_layer_sizes():
+        #     raise Exception('The two encoders must have the same output layer sizes!')
+        self.layer_sizes = [out_rgb + out_tir for
+                            out_rgb, out_tir in
+                            zip(get_layer_sizes(), get_layer_sizes())]
+
+    def forward(self, x):
+        rgb_out = self.encoder_rgb(x[:, 0:3])
+        tir_out = self.encoder_tir(x[:, 3:])
+        # return (mid1 + mid2 for mid1, mid2 in zip(rgb_out, tir_out))
+        return (torch.hstack((mid1, mid2)) for mid1, mid2 in zip(rgb_out, tir_out))
+
+
+class PretrainedEncoder(Encoder):
+    def __init__(self, model_name, pretrained):
+        super().__init__()
+        print('load the pre-trained model.')
+        net = getattr(models, model_name)(pretrained)
+        self.conv1 = net.conv1
+        self.bn1 = net.bn1
+        self.relu = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.layers = nn.ModuleList()
+        self.layers.append(net.layer1)
+        self.layers.append(net.layer2)
+        self.layers.append(net.layer3)
+        self.layers.append(net.layer4)
+
+        self.layer_sizes = get_layer_sizes(self.layers, model_name)
+
+        if pretrained:
+            for param in self.parameters():
+                param.requires_grad = False
+                self.pretrained = True
+            self.train(False)
+
+
+def get_layer_sizes(layers, model_name):
+    last_conv = -3
+    if model_name == 'resnet34':
+        last_conv = -2
+
+    return [list(list(layer.named_children())[-1][1].named_children())[last_conv][1].out_channels
+     for layer in layers]

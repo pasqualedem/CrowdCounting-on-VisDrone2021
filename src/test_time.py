@@ -14,7 +14,7 @@ import torch.backends.cudnn as cudnn
 from torchvision.models import vgg16, vgg19, vgg11
 from tabulate import tabulate
 from config import cfg
-from models.CC import CrowdCounter
+from models.model import CrowdCounter
 from dataset.random import RandomDataset
 
 

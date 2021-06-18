@@ -20,23 +20,32 @@ __C.EXP_PATH = '../exp'
 __C.DATASET = 'VisDrone2021'
 __C.DETAILS = ''
 
-# Net settings
-__C.ENCODER = 'MobileCount'
+# Net settings ########################################
+__C.NET = EasyDict()
+# PREDICTOR
+__C.NET.PREDICTOR = "SASNet"
+__C.NET.BLOCK_SIZE = 32  # SASNet block size setting
+
+# ENCODER
+__C.NET.ENCODER = 'LWEncoder'
 # For MobileCount
-__C.VERSION = 'x0_75'
-__C.CHANNELS = 4
+__C.NET.VERSION = ''
+__C.NET.CHANNELS = 4
 # For known models
-__C.PRETRAINED = False
+__C.NET.PRETRAINED = False
 
 # Possible second encoder
-__C.ENCODER_TIR = None
+__C.NET.ENCODER_TIR = None
 # For MobileCount
-__C.VERSION_TIR = None
-__C.CHANNELS_TIR = 1
+__C.NET.VERSION_TIR = None
+__C.NET.CHANNELS_TIR = 1
 # For known models
-__C.PRETRAINED_TIR = False
+__C.NET.PRETRAINED_TIR = False
 
-# learning optimizer settings
+# DECODER
+__C.NET.DECODER = 'SASDecoder'
+
+# learning optimizer settings ########################################
 __C.LR = 1e-4  # learning rate
 __C.W_DECAY = 1e-4  # weight decay
 __C.LR_DECAY = 0.995  # decay rate
@@ -64,19 +73,7 @@ __C.EARLY_STOP_DELTA = 1e-2
 # print
 __C.PRINT_FREQ = 10
 
-now = time.strftime("%m-%d_%H-%M", time.localtime())
 
-__C.NETNAME = __C.ENCODER + __C.VERSION \
-              + ('_freeze_' if __C.PRETRAINED else '') \
-              + (__C.ENCODER_TIR if __C.ENCODER_TIR else '') \
-              + (__C.VERSION_TIR if __C.VERSION_TIR else '') \
-              + (__C.PRETRAINED_TIR if __C.PRETRAINED_TIR else '')
-
-__C.EXP_NAME = now \
-               + '_' + __C.DATASET \
-               + '_' + __C.NETNAME \
-               + '_' + str(__C.LR) \
-               + '_' + __C.DETAILS
 __C.DEVICE = 'cuda'  # cpu or cuda
 
 # ------------------------------VAL------------------------

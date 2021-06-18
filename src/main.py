@@ -4,7 +4,7 @@ from ast import literal_eval
 from callbacks import call_dict
 from evaluate import evaluate_model
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from models.CC import CrowdCounter
+from models.model import choose_model
 # from dataset.visdrone2020 import load_test, load_train_val, cfg_data
 from dataset.visdrone2021 import load_test, load_train_val, cfg_data
 from dataset.run_datasets import make_dataset
@@ -19,10 +19,7 @@ def load_CC_train():
     """
     Load CrowdCounter model net for training mode
     """
-    args = {key: cfg[key] for key in
-            ['ENCODER', 'VERSION', 'CHANNELS', 'PRETRAINED',
-             'ENCODER_TIR', 'VERSION_TIR', 'CHANNELS_TIR', 'PRETRAINED_TIR']}
-    cc = CrowdCounter([0], args)
+    cc = choose_model([0], cfg.NET)
     return cc
 
 
@@ -32,7 +29,7 @@ def load_CC_test():
     Load CrowdCounter model net for testing mode
     """
     model_path = ""
-    cc = CrowdCounter([0], cfg.NET)
+    cc = choose_model([0], cfg.NET)
     cc.load(model_path)
     return cc
 

@@ -166,3 +166,31 @@ class Timer(object):
             return self.average_time
         else:
             return self.diff
+
+
+def build_exp_name(cfg):
+    netname = cfg.NET.PREDICTOR + '_'
+    netname += cfg.NET.ENCODER + '_'
+    if cfg.NET.ENCODER == 'MobileCount':
+        netname += cfg.NET.VERSION
+
+    if cfg.NET.ENCODER == 'MobileCount':
+        netname += ('_freeze_' if cfg.NET.PRETRAINED else '')
+
+    if cfg.NET.ENCODER_TIR:
+        netname += cfg.NET.ENCODER_TIR + '_'
+        if cfg.NET.ENCODER_TIR == 'LWEncoder':
+            netname += cfg.NET.VERSION_TIR + '_'
+
+        if cfg.NET.ENCODER_TIR == 'LWEncoder':
+            netname += ('_freeze_' if cfg.NET.PRETRAINED_TIR else '')
+
+    netname += cfg.NET.DECODER
+
+    now = time.strftime("%m-%d_%H-%M", time.localtime())
+
+    return now \
+           + '_' + cfg.DATASET \
+           + '_' + netname \
+           + '_' + str(cfg.LR) \
+           + '_' + cfg.DETAILS

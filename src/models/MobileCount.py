@@ -1,73 +1,69 @@
 """RefineNet-LightWeight. No RCU, only LightWeight-CRP block."""
-
 import torch.nn as nn
 import torch.nn.functional as F
-from models.block import Bottleneck, CRPBlock, conv1x1, conv3x3
+from models.block import Bottleneck, CRPBlock, conv1x1, FusionBlock
+from models.CC import CrowdCounterNetwork, Encoder
 
 
-class MobileCount(nn.Module):
+def initialize_weights(module: nn.Module):
+    for name, m in module.named_children():
+        if hasattr(m, 'pretrained'):
+            continue
+        if isinstance(m, nn.Conv2d):
+            n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+            m.weight.data.normal_(0, 0.01)
+        elif isinstance(m, nn.BatchNorm2d):
+            m.weight.data.fill_(1)
+            m.bias.data.zero_()
+        initialize_weights(m)
 
-    def __init__(self, layer_sizes):
-        self.layers_sizes = layer_sizes
-        self.inplanes = layer_sizes[0]
-        block = Bottleneck
-        layers = [1, 2, 3, 4]
-        expansion = [1, 6, 6, 6]
-        strides = [1, 2, 2, 2]
 
-        super(MobileCount, self).__init__()
+class MobileCount(CrowdCounterNetwork):
 
-        # implement of mobileNetv2
-        # self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
-        #                        bias=False)
+    def __init__(self, encoder, encoder_params, decoder, decoder_params):
+        self.layers_sizes = self.encoder.get_layer_sizes()
 
-        self.conv1 = nn.Conv2d(3, layer_sizes[0], kernel_size=3, stride=2, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(layer_sizes[0])
-        self.relu = nn.ReLU(inplace=True)
-
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, layer_sizes[0], layers[0], stride=1, expansion=1)
-        self.layer2 = self._make_layer(block, layer_sizes[1], layers[1], stride=2, expansion=6)
-        self.layer3 = self._make_layer(block, layer_sizes[2], layers[2], stride=2, expansion=6)
-        self.layer4 = self._make_layer(block, layer_sizes[3], layers[3], stride=2, expansion=6)
-
-        self.dropout4 = nn.Dropout(p=0.5)
-        self.p_ims1d2_outl1_dimred = conv1x1(layer_sizes[3], layer_sizes[1], bias=False)
-        self.mflow_conv_g1_pool = self._make_crp(layer_sizes[1], layer_sizes[1], 4)
-        self.mflow_conv_g1_b3_joint_varout_dimred = conv1x1(layer_sizes[1], layer_sizes[0], bias=False)
-
-        self.dropout3 = nn.Dropout(p=0.5)
-        self.p_ims1d2_outl2_dimred = conv1x1(layer_sizes[2], layer_sizes[0], bias=False)
-        self.adapt_stage2_b2_joint_varout_dimred = conv1x1(layer_sizes[0], layer_sizes[0], bias=False)
-        self.mflow_conv_g2_pool = self._make_crp(layer_sizes[0], layer_sizes[0], 4)
-        self.mflow_conv_g2_b3_joint_varout_dimred = conv1x1(layer_sizes[0], layer_sizes[0], bias=False)
-
-        self.p_ims1d2_outl3_dimred = conv1x1(layer_sizes[1], layer_sizes[0], bias=False)
-        self.adapt_stage3_b2_joint_varout_dimred = conv1x1(layer_sizes[0], layer_sizes[0], bias=False)
-        self.mflow_conv_g3_pool = self._make_crp(layer_sizes[0], layer_sizes[0], 4)
-        self.mflow_conv_g3_b3_joint_varout_dimred = conv1x1(layer_sizes[0], layer_sizes[0], bias=False)
-
-        self.p_ims1d2_outl4_dimred = conv1x1(layer_sizes[0], layer_sizes[0], bias=False)
-        self.adapt_stage4_b2_joint_varout_dimred = conv1x1(layer_sizes[0], layer_sizes[0], bias=False)
-        self.mflow_conv_g4_pool = self._make_crp(layer_sizes[0], layer_sizes[0], 4)
+        super(MobileCount, self).__init__(encoder, encoder_params, decoder, decoder_params)
 
         self.dropout_clf = nn.Dropout(p=0.5)
-        # self.clf_conv = nn.Conv2d(256, num_classes, kernel_size=3, stride=1,
-        #                           padding=1, bias=True)
-        self.clf_conv = nn.Conv2d(layer_sizes[0], 1, kernel_size=3, stride=1,
+        self.clf_conv = nn.Conv2d(self.layer_sizes[0], 1, kernel_size=3, stride=1,
                                   padding=1, bias=True)
 
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, 0.01)
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+    def forward(self, x):
+        size = x.shape[2:]
 
-    def _make_crp(self, in_planes, out_planes, stages):
-        layers = [CRPBlock(in_planes, out_planes, stages)]
-        return nn.Sequential(*layers)
+        l1, l2, l3, l4 = self.encoder(x)
+
+        dec = self.decoder(l1, l2, l3, l4)
+        dec = self.dropout_clf(dec)
+        out = self.clf_conv(dec)
+        out = F.interpolate(out, size=size, mode='bilinear', align_corners=False)
+
+        return out
+
+    def train(self, mode: bool = True):
+        for name, m in self.named_children():
+            if hasattr(m, 'pretrained'):
+                m.train(False)
+
+
+class LWEncoder(Encoder):
+    def __init__(self, layer_sizes, input_channels):
+        super().__init__()
+        block = Bottleneck
+        repetitions = [1, 2, 3, 4]
+        expansion = [1, 6, 6, 6]
+        strides = [1, 2, 2, 2]
+        self.inplanes = layer_sizes[0]
+
+        self.conv1 = nn.Conv2d(input_channels, layer_sizes[0], kernel_size=3, stride=2, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(layer_sizes[0])
+        self.relu = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
+        self.layers = nn.ModuleList(
+            [self._make_layer(block, layer_sizes[i], repetitions[i], strides[i], expansion[i]) for i in range(4)])
+        self.layer_sizes = layer_sizes
 
     def _make_layer(self, block, planes, blocks, stride, expansion):
 
@@ -80,59 +76,70 @@ class MobileCount(nn.Module):
                 nn.BatchNorm2d(planes),
             )
 
-        layers = []
-        layers.append(block(self.inplanes, planes, stride=stride, downsample=downsample, expansion=expansion))
+        layers = [block(self.inplanes, planes, stride=stride, downsample=downsample, expansion=expansion)]
         self.inplanes = planes
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes, expansion=expansion))
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
-        size1 = x.shape[2:]
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
 
-        l1 = self.layer1(x)
-        l2 = self.layer2(l1)
-        l3 = self.layer3(l2)
-        l4 = self.layer4(l3)
+def _make_crp(in_planes, out_planes, stages):
+    layers = [CRPBlock(in_planes, out_planes, stages)]
+    return nn.Sequential(*layers)
 
-        l4 = self.dropout4(l4)
-        x4 = self.p_ims1d2_outl1_dimred(l4)
+
+class LWDecoder(nn.Module):
+    def __init__(self, layer_sizes):
+        super().__init__()
+        self.dropouts = nn.ModuleList()
+        self.enlargings = nn.ModuleList()
+        self.CRPs = nn.ModuleList()
+        self.fusions = nn.ModuleList()
+
+        self.relu = nn.ReLU(inplace=True)
+
+        self.dropouts.append(nn.Dropout(p=0.5))
+        self.enlargings.append(conv1x1(layer_sizes[3], layer_sizes[1], bias=False))
+        self.CRPs.append(_make_crp(layer_sizes[1], layer_sizes[1], 4))
+
+        self.fusions.append(FusionBlock(conv_weight_dim=(layer_sizes[1], layer_sizes[0]),
+                                        conv_adapt_dim=(layer_sizes[0], layer_sizes[0])))
+
+        self.dropouts.append(nn.Dropout(p=0.5))
+        self.enlargings.append(conv1x1(layer_sizes[2], layer_sizes[0], bias=False))
+        self.CRPs.append(_make_crp(layer_sizes[0], layer_sizes[0], 4))
+
+        self.fusions.append(FusionBlock(conv_weight_dim=(layer_sizes[0], layer_sizes[0]),
+                                        conv_adapt_dim=(layer_sizes[0], layer_sizes[0])))
+
+        self.enlargings.append(conv1x1(layer_sizes[1], layer_sizes[0], bias=False))
+        self.CRPs.append(_make_crp(layer_sizes[0], layer_sizes[0], 4))
+
+        self.fusions.append(FusionBlock(conv_weight_dim=(layer_sizes[0], layer_sizes[0]),
+                                        conv_adapt_dim=(layer_sizes[0], layer_sizes[0])))
+
+        self.enlargings.append(conv1x1(layer_sizes[0], layer_sizes[0], bias=False))
+        self.CRPs.append(_make_crp(layer_sizes[0], layer_sizes[0], 4))
+
+    def forward(self, l1, l2, l3, l4):
+        l4 = self.dropouts[0](l4)
+        x4 = self.enlargings[0](l4)
         x4 = self.relu(x4)
-        x4 = self.mflow_conv_g1_pool(x4)
-        x4 = self.mflow_conv_g1_b3_joint_varout_dimred(x4)
-        x4 = nn.Upsample(size=l3.size()[2:], mode='bilinear')(x4)
+        x4 = self.CRPs[0](x4)
 
-        l3 = self.dropout3(l3)
-        x3 = self.p_ims1d2_outl2_dimred(l3)
-        x3 = self.adapt_stage2_b2_joint_varout_dimred(x3)
-        x3 = x3 + x4
-        x3 = F.relu(x3)
-        x3 = self.mflow_conv_g2_pool(x3)
-        x3 = self.mflow_conv_g2_b3_joint_varout_dimred(x3)
-        x3 = nn.Upsample(size=l2.size()[2:], mode='bilinear')(x3)
+        l3 = self.dropouts[1](l3)
+        x3 = self.enlargings[1](l3)
+        x3 = self.fusions[0](x4, x3)
+        x3 = self.CRPs[1](x3)
 
-        x2 = self.p_ims1d2_outl3_dimred(l2)
-        x2 = self.adapt_stage3_b2_joint_varout_dimred(x2)
-        x2 = x2 + x3
-        x2 = F.relu(x2)
-        x2 = self.mflow_conv_g3_pool(x2)
-        x2 = self.mflow_conv_g3_b3_joint_varout_dimred(x2)
-        x2 = nn.Upsample(size=l1.size()[2:], mode='bilinear')(x2)
+        x2 = self.enlargings[2](l2)
+        x2 = self.fusions[1](x3, x2)
+        x2 = self.CRPs[2](x2)
 
-        x1 = self.p_ims1d2_outl4_dimred(l1)
-        x1 = self.adapt_stage4_b2_joint_varout_dimred(x1)
-        x1 = x1 + x2
-        x1 = F.relu(x1)
-        x1 = self.mflow_conv_g4_pool(x1)
+        x1 = self.enlargings[3](l1)
+        x1 = self.fusions[2](x2, x1)
+        x1 = self.CRPs[3](x1)
 
-        x1 = self.dropout_clf(x1)
-        out = self.clf_conv(x1)
+        return x1
 
-        out = F.interpolate(out, size=size1, mode='bilinear', align_corners=False)
-
-        return out
