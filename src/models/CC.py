@@ -77,7 +77,7 @@ class DoubleEncoder(Encoder):
         #     raise Exception('The two encoders must have the same output layer sizes!')
         self.layer_sizes = [out_rgb + out_tir for
                             out_rgb, out_tir in
-                            zip(self.encoder_rgb.get_layer_sizes(), self.encoder_rgb.get_layer_sizes())]
+                            zip(self.encoder_rgb.get_layer_sizes(), self.encoder_tir.get_layer_sizes())]
 
     def forward(self, x):
         rgb_out = self.encoder_rgb(x[:, 0:3])

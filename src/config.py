@@ -7,7 +7,7 @@ cfg = __C
 __C.SEED = 3035  # random seed
 
 # System settings
-__C.TRAIN_BATCH_SIZE = 8
+__C.TRAIN_BATCH_SIZE = 1
 __C.VAL_BATCH_SIZE = 6
 __C.TEST_BATCH_SIZE = 6
 __C.N_WORKERS = 1
@@ -27,7 +27,7 @@ __C.NET.PREDICTOR = "SASNet"
 __C.NET.BLOCK_SIZE = 32  # SASNet block size setting
 
 # ENCODER
-__C.NET.ENCODER = 'resnet18'
+__C.NET.ENCODER = 'resnet34'
 # For MobileCount
 __C.NET.VERSION = ''
 __C.NET.CHANNELS = 3
@@ -35,10 +35,10 @@ __C.NET.CHANNELS = 3
 __C.NET.PRETRAINED = False
 
 # Possible second encoder
-__C.NET.ENCODER_TIR = 'resnet18'
+__C.NET.ENCODER_TIR = 'LWEncoder'
 # For MobileCount
-__C.NET.VERSION_TIR = None
-__C.NET.CHANNELS_TIR = 3
+__C.NET.VERSION_TIR = 'x0_5'
+__C.NET.CHANNELS_TIR = 1
 # For known models
 __C.NET.PRETRAINED_TIR = False
 
