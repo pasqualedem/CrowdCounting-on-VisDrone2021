@@ -173,10 +173,9 @@ class Timer(object):
 def build_exp_name(cfg):
     netname = cfg.NET.PREDICTOR + '_'
     netname += cfg.NET.ENCODER + '_'
-    if cfg.NET.ENCODER == 'MobileCount':
+    if cfg.NET.ENCODER == 'LWEncoder':
         netname += cfg.NET.VERSION
-
-    if cfg.NET.ENCODER == 'MobileCount':
+    else:
         netname += ('_freeze_' if cfg.NET.PRETRAINED else '')
 
     if cfg.NET.ENCODER_TIR:
