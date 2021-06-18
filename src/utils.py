@@ -174,7 +174,7 @@ def build_exp_name(cfg):
     netname = cfg.NET.PREDICTOR + '_'
     netname += cfg.NET.ENCODER + '_'
     if cfg.NET.ENCODER == 'LWEncoder':
-        netname += cfg.NET.VERSION
+        netname += cfg.NET.VERSION + '_'
     else:
         netname += ('_freeze_' if cfg.NET.PRETRAINED else '')
 
