@@ -101,7 +101,8 @@ class Trainer:
             img, gt = data
             img = img.to(cfg.DEVICE)
             gt = gt.to(cfg.DEVICE)
-
+            if self.epoch == 1:
+                print()
             self.optimizer.zero_grad()
             pred_den = self.net.predict(img)
             loss = self.net.build_loss(pred_den, gt)

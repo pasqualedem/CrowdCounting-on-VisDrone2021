@@ -13,7 +13,7 @@ import transformations as trans
 
 cfg_data = EasyDict()
 
-cfg_data.SIZE = (512, 640)
+cfg_data.SIZE = (224, 224)
 cfg_data.CHANNELS = 4
 cfg_data.FILE_EXTENSION = '.jpg'
 cfg_data.GT_FILE_EXTENSION = '.npz'
@@ -51,7 +51,7 @@ class VisDrone2021Dataset(torch.utils.data.Dataset):
             trans_list = [torchvision.transforms.ToTensor(),
                           torchvision.transforms.Normalize(mean=cfg_data.MEAN,
                                                            std=cfg_data.STD),
-                          # torchvision.transforms.Resize(cfg_data.SIZE)
+                          torchvision.transforms.Resize(cfg_data.SIZE)
                           ]
             if cfg_data.GAMMA_CORRECTION:
                 trans_list.insert(1, trans.RandomGammaCorrection(cfg_data.BETA_ALPHA, cfg_data.BETA_BETA))
@@ -163,16 +163,3 @@ def load_train_val():
 
     return train_loader, val_loader
 
-
-def generate_validation():
-    import os
-    import numpy as np
-    import shutil
-    np.random.seed(cfg.SEED)
-    source = "../../dataset/VisDrone2020-CC/train"
-    target = "../val"
-    os.chdir(source)
-    l = os.listdir()
-    val = np.random.choice(l, 16, replace=False)  # 16 is the 0.20 of the training set
-    for file in val:
-        shutil.move(os.path.join('./', file), os.path.join(target, file))

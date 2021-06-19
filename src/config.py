@@ -7,10 +7,10 @@ cfg = __C
 __C.SEED = 3035  # random seed
 
 # System settings
-__C.TRAIN_BATCH_SIZE = 1
+__C.TRAIN_BATCH_SIZE = 4
 __C.VAL_BATCH_SIZE = 6
 __C.TEST_BATCH_SIZE = 6
-__C.N_WORKERS = 1
+__C.N_WORKERS = 0
 
 # Training settings
 __C.RESUME = False
@@ -18,32 +18,32 @@ __C.RESUME = False
 # path settings
 __C.EXP_PATH = '../exp'
 __C.DATASET = 'VisDrone2021'
-__C.DETAILS = ''
+__C.DETAILS = '_224x224'
 
 # Net settings ########################################
 __C.NET = EasyDict()
 # PREDICTOR
-__C.NET.PREDICTOR = "MobileCount"
+__C.NET.PREDICTOR = "SASNet"
 __C.NET.BLOCK_SIZE = 32  # SASNet block size setting
 
 # ENCODER
-__C.NET.ENCODER = 'resnet50'
+__C.NET.ENCODER = 'resnet34'
 # For MobileCount
 __C.NET.VERSION = ''
 __C.NET.CHANNELS = 3
 # For known models
-__C.NET.PRETRAINED = False
+__C.NET.PRETRAINED = True
 
 # Possible second encoder
-__C.NET.ENCODER_TIR = 'LWEncoder'
+__C.NET.ENCODER_TIR = 'resnet18'
 # For MobileCount
-__C.NET.VERSION_TIR = 'x2'
-__C.NET.CHANNELS_TIR = 1
+__C.NET.VERSION_TIR = 'x0_5'
+__C.NET.CHANNELS_TIR = 3
 # For known models
-__C.NET.PRETRAINED_TIR = False
+__C.NET.PRETRAINED_TIR = True
 
 # DECODER
-__C.NET.DECODER = 'LWDecoder'
+__C.NET.DECODER = 'SASDecoder'
 
 # learning optimizer settings ########################################
 __C.LR = 1e-4  # learning rate
@@ -78,5 +78,5 @@ __C.DEVICE = 'cuda'  # cpu or cuda
 
 # ------------------------------VAL------------------------
 __C.VAL_SIZE = 0.2
-__C.VAL_DENSE_START = 1
+__C.VAL_DENSE_START = 0
 __C.VAL_FREQ = 10  # Before __C.VAL_DENSE_START epoches, the freq is set as __C.VAL_FREQ

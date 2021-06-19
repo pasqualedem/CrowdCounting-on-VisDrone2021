@@ -25,7 +25,7 @@ def generate_heatmap(df, img_size, wished_heatmap_size):
     """
     img_size = np.array(img_size)
     wished_heatmap_size = np.array(wished_heatmap_size)
-    ratio = (img_size / wished_heatmap_size)
+    ratio = (img_size / wished_heatmap_size)[::-1]
 
     heads = np.rint(df[['x', 'y']].values / ratio).astype('int64')
     heatmap = np.zeros(wished_heatmap_size)
