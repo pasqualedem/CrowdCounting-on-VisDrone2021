@@ -37,6 +37,36 @@ class FolderDataset(FilesDataset):
         super().__init__(files, transforms)
 
 
+class RGBTIRFOlderDataset(torch.utils.data.Dataset):
+    """
+    Dataset torch subclass to load two folder of couples of images
+    """
+    def __init__(self, folder, transforms=None):
+        rgb_folder = os.path.join(folder, 'RGB')
+        tir_folder = os.path.join(folder, 'TIR')
+        self.files = [(os.path.join(rgb_folder, file),
+                       os.path.join(tir_folder, file))
+                      for file in os.listdir(rgb_folder)]
+        self.transforms = transforms
+
+    def set_transforms(self, transforms):
+        self.transforms = transforms
+
+    def __getitem__(self, item):
+        # Load the imgs
+        with pil.open(self.files[item][0]) as img:
+            data = np.array(img)
+        with pil.open(self.files[item][0]) as img:
+            tir = np.array(img.split()[0])
+        data = np.concatenate((data, tir.reshape(*tir.shape[:], 1)), axis=2)
+        if self.transforms:
+            data = self.transforms(data)
+        return data, self.files[item][0]
+
+    def __len__(self):
+        return len(self.files)
+
+
 class VideoDataset(torch.utils.data.Dataset):
     """
     Dataset torch subclass to encapsulate a video
@@ -86,4 +116,6 @@ def make_dataset(input):
                     return VideoDataset(input)
     elif issubclass(type(input), list):
         return FilesDataset(input)
+    elif issubclass(type(input), tuple):
+        return RGBTIRFOlderDataset(*input)
     raise Exception('Input type not recognized!')

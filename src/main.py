@@ -28,7 +28,7 @@ def load_CC_test():
     """
     Load CrowdCounter model net for testing mode
     """
-    model_path = ""
+    model_path = "../exp/wow/ep_62_val_mae_15.6_val_rmse_21.2.pth"
     cc = choose_model([0], cfg.NET)
     cc.load(model_path)
     return cc
@@ -57,6 +57,10 @@ def run_net(in_file, callbacks):
     @param in_file: media file or folder of images
     @param callbacks: list of callbacks to be called after every forward operation
     """
+    try:
+        in_file = literal_eval(in_file)
+    except ValueError:
+        print('Taking string as input')
     dataset = make_dataset(in_file)
 
     transforms = run_transforms(cfg_data.MEAN, cfg_data.STD, cfg_data.SIZE)

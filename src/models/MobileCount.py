@@ -21,12 +21,11 @@ def initialize_weights(module: nn.Module):
 class MobileCount(CrowdCounterNetwork):
 
     def __init__(self, encoder, encoder_params, decoder, decoder_params):
+        super(MobileCount, self).__init__(encoder, encoder_params, decoder, decoder_params)
         self.layers_sizes = self.encoder.get_layer_sizes()
 
-        super(MobileCount, self).__init__(encoder, encoder_params, decoder, decoder_params)
-
         self.dropout_clf = nn.Dropout(p=0.5)
-        self.clf_conv = nn.Conv2d(self.layer_sizes[0], 1, kernel_size=3, stride=1,
+        self.clf_conv = nn.Conv2d(self.layers_sizes[0], 1, kernel_size=3, stride=1,
                                   padding=1, bias=True)
 
     def forward(self, x):

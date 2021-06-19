@@ -51,5 +51,5 @@ def run_transforms(mean, std, size):
     return torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
                                            torchvision.transforms.Normalize(mean=mean,
                                                                             std=std),
-                                           torchvision.transforms.Resize(size)
+                                           # torchvision.transforms.Resize(size)
                                            ])  # normalize to (-1, 1)
