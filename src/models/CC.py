@@ -49,14 +49,22 @@ class CrowdCounterNetwork(nn.Module):
         self.encoder = encoder(*encoder_params)
         self.decoder = decoder(self.encoder.get_layer_sizes(), *decoder_params)
 
+    def train(self, mode: bool = True):
+        for name, m in self.named_children():
+            if hasattr(m, 'pretrained'):
+                m.train(False)
+
 
 class Encoder(nn.Module):
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
+        if hasattr(self, 'name') and self.name == 'inception':
+            x = self.conv_pool1(x)
+        else:
+            x = self.conv1(x)
+            x = self.bn1(x)
+            x = self.relu(x)
+            x = self.maxpool(x)
         l1 = self.layers[0](x)
         l2 = self.layers[1](l1)
         l3 = self.layers[2](l2)
@@ -90,19 +98,8 @@ class PretrainedEncoder(Encoder):
     def __init__(self, model_name, pretrained, channels=None):
         super().__init__()
         print('load the pre-trained model.')
-        net = getattr(models, model_name)(pretrained)
-        self.conv1 = net.conv1
-        self.bn1 = net.bn1
-        self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layers = nn.ModuleList()
-        self.layers.append(net.layer1)
-        self.layers.append(net.layer2)
-        self.layers.append(net.layer3)
-        self.layers.append(net.layer4)
-
+        self.get_standard_network(model_name, pretrained)
         self.channels = channels
-        self.layer_sizes = get_layer_sizes(self.layers, model_name)
 
         if pretrained:
             for param in self.parameters():
@@ -115,11 +112,35 @@ class PretrainedEncoder(Encoder):
             x = x.repeat(1, self.channels, 1, 1)
         return super().forward(x)
 
+    def get_standard_network(self, model_name, pretrained):
+        net = getattr(models, model_name)(pretrained)
+        self.layers = nn.ModuleList()
 
-def get_layer_sizes(layers, model_name):
-    last_conv = -3
-    if model_name == 'resnet34' or model_name == 'resnet18':
-        last_conv = -2
+        if 'resnet' in model_name:
+            self.conv1 = net.conv1
+            self.bn1 = net.bn1
+            self.relu = nn.ReLU(inplace=True)
+            self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+            self.layers.append(net.layer1)
+            self.layers.append(net.layer2)
+            self.layers.append(net.layer3)
+            self.layers.append(net.layer4)
 
-    return [list(list(layer.named_children())[-1][1].named_children())[last_conv][1].out_channels
-            for layer in layers]
+            last_conv = -3
+            if model_name == 'resnet34' or model_name == 'resnet18':
+                last_conv = -2
+
+            self.layer_sizes = [list(list(layer.named_children())[-1][1].named_children())[last_conv][1].out_channels
+                                 for layer in self.layers]
+
+        elif 'inception' in model_name:
+            self.name = 'inception'
+            self.layer_sizes = [288, 768, 1280, 2048]
+            _, modules = zip(*list(net.named_children()))
+            self.conv_pool1 = nn.Sequential(*modules[:7])
+            self.layers.append(nn.Sequential(*modules[7:10]))
+            self.layers.append(nn.Sequential(*modules[10:15]))
+            self.layers.append(nn.Sequential(*modules[16:17]))
+            self.layers.append(nn.Sequential(*modules[17:21]))
+        else:
+            raise Exception("Network not found")

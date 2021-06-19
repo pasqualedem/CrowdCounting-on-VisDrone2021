@@ -7,10 +7,10 @@ cfg = __C
 __C.SEED = 3035  # random seed
 
 # System settings
-__C.TRAIN_BATCH_SIZE = 4
+__C.TRAIN_BATCH_SIZE = 1
 __C.VAL_BATCH_SIZE = 6
 __C.TEST_BATCH_SIZE = 6
-__C.N_WORKERS = 0
+__C.N_WORKERS = 2
 
 # Training settings
 __C.RESUME = False
@@ -18,7 +18,7 @@ __C.RESUME = False
 # path settings
 __C.EXP_PATH = '../exp'
 __C.DATASET = 'VisDrone2021'
-__C.DETAILS = '_224x224'
+__C.DETAILS = ''
 
 # Net settings ########################################
 __C.NET = EasyDict()
@@ -27,17 +27,17 @@ __C.NET.PREDICTOR = "SASNet"
 __C.NET.BLOCK_SIZE = 32  # SASNet block size setting
 
 # ENCODER
-__C.NET.ENCODER = 'resnet34'
+__C.NET.ENCODER = 'inception_v3'
 # For MobileCount
-__C.NET.VERSION = ''
+__C.NET.VERSION = 'x2'
 __C.NET.CHANNELS = 3
 # For known models
 __C.NET.PRETRAINED = True
 
 # Possible second encoder
-__C.NET.ENCODER_TIR = 'resnet18'
+__C.NET.ENCODER_TIR = 'inception_v3'
 # For MobileCount
-__C.NET.VERSION_TIR = 'x0_5'
+__C.NET.VERSION_TIR = ''
 __C.NET.CHANNELS_TIR = 3
 # For known models
 __C.NET.PRETRAINED_TIR = True
