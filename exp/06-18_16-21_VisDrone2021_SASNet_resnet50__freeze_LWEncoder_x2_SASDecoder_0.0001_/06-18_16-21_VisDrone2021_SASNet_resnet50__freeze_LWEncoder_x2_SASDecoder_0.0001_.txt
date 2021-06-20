@@ -1,0 +1,64 @@
+{
+    "DATASET": "VisDrone2021",
+    "DETAILS": "",
+    "DEVICE": "cuda",
+    "EARLY_STOP_DELTA": 0.01,
+    "EXP_PATH": "/content/drive/MyDrive/VisDroneExps",
+    "LR": 0.0001,
+    "LR_DECAY": 0.995,
+    "LR_DECAY_START": 0,
+    "MAX_EPOCH": 500,
+    "NET": {
+        "BLOCK_SIZE": 32,
+        "CHANNELS": 3,
+        "CHANNELS_TIR": 1,
+        "DECODER": "SASDecoder",
+        "ENCODER": "resnet50",
+        "ENCODER_TIR": "LWEncoder",
+        "PREDICTOR": "SASNet",
+        "PRETRAINED": true,
+        "PRETRAINED_TIR": false,
+        "VERSION": "",
+        "VERSION_TIR": "x2"
+    },
+    "NUM_EPOCH_LR_DECAY": 1,
+    "N_WORKERS": 1,
+    "OPTIM": [
+        "Adam",
+        {
+            "lr": 0.0001,
+            "weight_decay": 0.0001
+        }
+    ],
+    "OPTIM_ADAM": [
+        "Adam",
+        {
+            "lr": 0.0001,
+            "weight_decay": 0.0001
+        }
+    ],
+    "OPTIM_SGD": [
+        "SGD",
+        {
+            "lr": 0.0001,
+            "momentum": 0.95,
+            "weight_decay": 0.0001
+        }
+    ],
+    "PATIENCE": 20,
+    "PRINT_FREQ": 10,
+    "RESUME": null,
+    "SEED": 3035,
+    "TEST_BATCH_SIZE": 6,
+    "TRAIN_BATCH_SIZE": 2,
+    "VAL_BATCH_SIZE": 6,
+    "VAL_DENSE_START": 1,
+    "VAL_FREQ": 10,
+    "VAL_SIZE": 0.2,
+    "W_DECAY": 0.0001
+}
+
+
+
+Epoch 0 |     [mae 194.74 mse 207.94], [val loss 18.5082] [forward time 236.67] [train/valid time 1741.55 / 17.33] --- [BEST]
+Epoch 2 |     [mae 21.79 mse 27.75], [val loss 12.7018] [forward time 128.88] [train/valid time 1830.95 / 17.20] --- [BEST]
