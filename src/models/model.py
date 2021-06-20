@@ -57,6 +57,7 @@ def choose_model(gpus, model_args):
         rgb_encoder = encoder
         encoder = DoubleEncoder
         tir_encoder_dict = {arg.replace('_TIR', ''): model_args[arg] for arg in model_args if '_TIR' in arg}
+        tir_encoder_dict['BLOCKS'] = model_args['BLOCKS']
         tir_encoder, tir_args = choose_encoder(tir_encoder_dict)
         enc_args = [rgb_encoder, enc_args, tir_encoder, tir_args]
 

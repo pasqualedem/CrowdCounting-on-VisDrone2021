@@ -171,7 +171,7 @@ class Timer(object):
 
 
 def build_exp_name(cfg):
-    netname = cfg.NET.PREDICTOR + '_'
+    netname = cfg.NET.PREDICTOR + (str(cfg.NET.BLOCKS) if cfg.NET.BLOCKS != 4 else '') + '_'
     netname += cfg.NET.ENCODER + '_'
     if cfg.NET.ENCODER == 'LWEncoder':
         netname += cfg.NET.VERSION + '_'
@@ -182,8 +182,7 @@ def build_exp_name(cfg):
         netname += cfg.NET.ENCODER_TIR + '_'
         if cfg.NET.ENCODER_TIR == 'LWEncoder':
             netname += cfg.NET.VERSION_TIR + '_'
-
-        if cfg.NET.ENCODER_TIR == 'LWEncoder':
+        else:
             netname += ('_freeze_' if cfg.NET.PRETRAINED_TIR else '')
 
     netname += cfg.NET.DECODER

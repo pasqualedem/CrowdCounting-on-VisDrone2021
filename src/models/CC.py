@@ -1,6 +1,5 @@
 import torch
-import torch.nn as nn
-from torch import nn as nn
+from torch import nn
 from torchvision import models as models
 
 
