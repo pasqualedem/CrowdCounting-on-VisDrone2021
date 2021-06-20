@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from models.CC import CrowdCounterNetwork
+import math
 
 
 class Conv2d(nn.Module):
@@ -41,7 +42,7 @@ class SASNet(CrowdCounterNetwork):
         ])
 
         self.confidence_head = nn.ModuleList([
-            ConfidenceHeadBlock(lsize, lsize // 4) for lsize in layer_sizes
+            ConfidenceHeadBlock(lsize, math.ceil(lsize / 4)) for lsize in layer_sizes
         ])
 
         self.block_size = block_size
@@ -115,8 +116,8 @@ class SASDecoder(nn.Module):
         super().__init__()
         self.decoder = nn.ModuleList([
             nn.Sequential(
-                Conv2d(layer_sizes[i] + layer_sizes[i] // 2, layer_sizes[i], 3, same_padding=True, NL='relu'),
-                Conv2d(layer_sizes[i], layer_sizes[i] // 2, 3, same_padding=True, NL='relu'),
+                Conv2d(layer_sizes[i] + layer_sizes[i - 1], layer_sizes[i], 3, same_padding=True, NL='relu'),
+                Conv2d(layer_sizes[i], layer_sizes[i - 1], 3, same_padding=True, NL='relu'),
             ) for i in range(1, len(layer_sizes))
 
         ])

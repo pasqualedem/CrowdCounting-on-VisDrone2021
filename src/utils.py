@@ -172,6 +172,8 @@ class Timer(object):
 
 def build_exp_name(cfg):
     netname = cfg.NET.PREDICTOR + (str(cfg.NET.BLOCKS) if cfg.NET.BLOCKS != 4 else '') + '_'
+    netname += "upconvt_" if cfg.NET.UPSAMPLING == 'convtrans' else ''
+    netname += "upconv_" if cfg.NET.UPSAMPLING == 'conv' else ''
     netname += cfg.NET.ENCODER + '_'
     if cfg.NET.ENCODER == 'LWEncoder':
         netname += cfg.NET.VERSION + '_'

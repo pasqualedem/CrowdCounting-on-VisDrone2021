@@ -1,4 +1,4 @@
-from models.MobileCount import LWEncoder, LWDecoder, MobileCount
+from models.MobileCount import LWEncoder, LWDecoder, MobileCount, ComposedEncoder
 from models.ScaleAdaptiveSelection import SASNet, SASDecoder
 from models.CC import CrowdCounter, DoubleEncoder, PretrainedEncoder
 
@@ -13,12 +13,13 @@ MBVersions = {
 
 # Dict that select which parameter pass to the class for each network
 Predictors = {
-    'MobileCount': (MobileCount, []),
-    'SASNet': (SASNet, ['BLOCK_SIZE', 'UPSAMPLING'])
+    'MobileCount': (MobileCount, ['UPSAMPLING']),
+    'SASNet': (SASNet, ['BLOCK_SIZE'])
              }
 
 Encoders = {
     'Pretrained': (PretrainedEncoder, ['ENCODER', 'PRETRAINED', 'BLOCKS', 'CHANNELS']),
+    'Composed': (ComposedEncoder, ['ENCODER', 'PRETRAINED', 'BLOCKS', 'CHANNELS']),
     'LWEncoder': (LWEncoder, ['CHANNELS'])
 }
 
@@ -32,7 +33,10 @@ def choose_encoder(model_args):
     try:
         model, key_args = Encoders[model_args['ENCODER']]
     except KeyError:
-        model, key_args = Encoders['Pretrained']
+        if model_args['COMPOSED']:
+            model, key_args = Encoders['Composed']
+        else:
+            model, key_args = Encoders['Pretrained']
 
     args = []
     if model == LWEncoder:

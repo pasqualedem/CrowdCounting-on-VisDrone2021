@@ -41,7 +41,7 @@ class CRPBlock(nn.Module):
 class ConvTransposeUpsampling(nn.Module):
     expansion = 1
 
-    def __init__(self, channels, kernel_size=3, stride=2, padding=1, output_padding=1):
+    def __init__(self, channels, kernel_size=5, stride=4, padding=1, output_padding=1, dilation=2):
         super(ConvTransposeUpsampling, self).__init__()
         self.convtrans = nn.ConvTranspose2d(channels, channels,
                                             kernel_size=kernel_size,

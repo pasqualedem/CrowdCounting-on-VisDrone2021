@@ -2,7 +2,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from models.block import Bottleneck, CRPBlock, conv1x1, FusionBlock, ConvTransposeUpsampling, ConvUpsampling
-from models.CC import CrowdCounterNetwork, Encoder
+from models.CC import CrowdCounterNetwork, Encoder, PretrainedEncoder
 
 
 def initialize_weights(module: nn.Module):
@@ -28,7 +28,8 @@ class MobileCount(CrowdCounterNetwork):
         self.clf_conv = nn.Conv2d(self.layers_sizes[0], 1, kernel_size=3, stride=1,
                                   padding=1, bias=True)
         if upsampling == 'convtrans':
-            self.upsampling = ConvTransposeUpsampling(1, kernel_size=3, stride=2, padding=1, output_padding=1)
+            self.upsampling = ConvTransposeUpsampling(1, kernel_size=11, stride=4,
+                                                      padding=9, output_padding=1, dilation=2)
         elif upsampling == 'conv':
             self.upsampling = ConvUpsampling(1)
 
@@ -41,7 +42,7 @@ class MobileCount(CrowdCounterNetwork):
         dec = self.dropout_clf(dec)
         out = self.clf_conv(dec)
         if hasattr(self, 'upsampling'):
-            out = self.upsampling(out)
+            out = self.upsampling(out, size)
         else:
             out = F.interpolate(out, size=size, mode='bilinear', align_corners=False)
 
@@ -83,6 +84,53 @@ class LWEncoder(Encoder):
             layers.append(block(self.inplanes, planes, expansion=expansion))
 
         return nn.Sequential(*layers)
+
+
+class SLWEncoder(nn.Module):
+    def __init__(self):
+        super(SLWEncoder, self).__init__()
+        downsample = None
+        stride = 1
+        expansion = 6
+        block = Bottleneck
+        blocks = 1
+        planes = 3
+        self.inplanes = 3
+
+        if stride != 1 or self.inplanes != planes * block.expansion:
+            downsample = nn.Sequential(
+                nn.Conv2d(self.inplanes, planes,
+                          kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(planes),
+            )
+
+        layers = [block(self.inplanes, planes, stride=stride, downsample=downsample, expansion=expansion)]
+        self.inplanes = planes
+        for i in range(1, blocks):
+            layers.append(block(self.inplanes, planes, expansion=expansion))
+
+        self.encoder = nn.Sequential(*layers)
+
+    def forward(self, x):
+        if self.inplanes != x.shape[1]:
+            x = x.repeat(1, self.inplanes, 1, 1)
+        return self.encoder(x)
+
+
+class ComposedEncoder(nn.Module):
+    def __init__(self, model_name, pretrained, blocks=4, channels=None):
+        super().__init__()
+        self.first = SLWEncoder()
+        self.second = PretrainedEncoder(model_name, pretrained, blocks, channels)
+        self.layer_sizes = [3] + self.second.get_layer_sizes()
+
+    def forward(self, x):
+        x = self.first(x)
+        xs = self.second(x)
+        return [x] + xs
+
+    def get_layer_sizes(self):
+        return self.layer_sizes
 
 
 def _make_crp(in_planes, out_planes, stages):
