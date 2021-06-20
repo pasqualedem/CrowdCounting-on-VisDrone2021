@@ -134,7 +134,7 @@ class PretrainedEncoder(Encoder):
             self.name = 'inception'
             self.layer_sizes = [288, 768, 1280, 2048][:blocks]
             _, modules = zip(*list(net.named_children()))
-            net_layers = [slice(7), slice(7, 10), slice(10, 15), slice(16, 17), slice(17, 21)]
+            net_layers = [slice(7, 10), slice(10, 15), slice(16, 17), slice(17, 21)]
             self.conv_pool1 = nn.Sequential(*modules[:7])
             for i in range(blocks):
                 self.layers.append(nn.Sequential(*modules[net_layers[i]]))
