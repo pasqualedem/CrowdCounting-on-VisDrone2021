@@ -132,12 +132,17 @@ class PretrainedEncoder(Encoder):
 
         elif 'inception' in model_name:
             self.name = 'inception'
+            from operator import itemgetter as it
             self.layer_sizes = [288, 768, 1280, 2048][:blocks]
             _, modules = zip(*list(net.named_children()))
-            net_layers = [slice(7), slice(7, 10), slice(10, 15), slice(16, 17), slice(17, 21)]
+            net_layers = [it(slice(7)),
+                          it(slice(7, 10)),
+                          it(slice(10, 15)),
+                          it(slice(16, 17)),
+                          it(17, 18, 20)]
             self.conv_pool1 = nn.Sequential(*modules[:7])
             for i in range(blocks):
-                self.layers.append(nn.Sequential(*modules[net_layers[i]]))
+                self.layers.append(nn.Sequential(*net_layers[i](modules)))
         else:
             raise Exception("Network not found")
 
