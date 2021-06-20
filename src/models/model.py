@@ -18,7 +18,7 @@ Predictors = {
              }
 
 Encoders = {
-    'Pretrained': (PretrainedEncoder, ['ENCODER', 'PRETRAINED', 'CHANNELS']),
+    'Pretrained': (PretrainedEncoder, ['ENCODER', 'PRETRAINED', 'BLOCKS', 'CHANNELS']),
     'LWEncoder': (LWEncoder, ['CHANNELS'])
 }
 

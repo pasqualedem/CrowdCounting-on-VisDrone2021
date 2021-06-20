@@ -116,7 +116,8 @@ class LWDecoder(nn.Module):
         self.enlargings.append(conv1x1(layer_sizes[0], layer_sizes[0], bias=False))
         self.CRPs.append(_make_crp(layer_sizes[0], layer_sizes[0], 4))
 
-    def forward(self, l1, l2, l3, l4):
+    def forward(self, x):
+        l1, l2, l3, l4 = x
         l4 = self.dropouts[0](l4)
         x4 = self.enlargings[0](l4)
         x4 = self.relu(x4)

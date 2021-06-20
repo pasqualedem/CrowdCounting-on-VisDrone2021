@@ -65,12 +65,13 @@ class Encoder(nn.Module):
             x = self.bn1(x)
             x = self.relu(x)
             x = self.maxpool(x)
-        l1 = self.layers[0](x)
-        l2 = self.layers[1](l1)
-        l3 = self.layers[2](l2)
-        l4 = self.layers[3](l3)
+        results = []
+        res = x
+        for layer in self.layers:
+            res = layer(res)
+            results.append(res)
 
-        return [l1, l2, l3, l4]
+        return results
 
     def get_layer_sizes(self):
         return self.layer_sizes
@@ -95,10 +96,10 @@ class DoubleEncoder(Encoder):
 
 
 class PretrainedEncoder(Encoder):
-    def __init__(self, model_name, pretrained, channels=None):
+    def __init__(self, model_name, pretrained, blocks=4, channels=None):
         super().__init__()
         print('load the pre-trained model.')
-        self.get_standard_network(model_name, pretrained)
+        self.get_standard_network(model_name, pretrained, blocks)
         self.channels = channels
 
         if pretrained:
@@ -112,7 +113,7 @@ class PretrainedEncoder(Encoder):
             x = x.repeat(1, self.channels, 1, 1)
         return super().forward(x)
 
-    def get_standard_network(self, model_name, pretrained):
+    def get_standard_network(self, model_name, pretrained, blocks):
         net = getattr(models, model_name)(pretrained)
         self.layers = nn.ModuleList()
 
@@ -121,11 +122,8 @@ class PretrainedEncoder(Encoder):
             self.bn1 = net.bn1
             self.relu = nn.ReLU(inplace=True)
             self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-            self.layers.append(net.layer1)
-            self.layers.append(net.layer2)
-            self.layers.append(net.layer3)
-            self.layers.append(net.layer4)
-
+            for i in range(blocks):
+                self.layers.append(getattr(net, 'layer' + str(i + 1)))
             last_conv = -3
             if model_name == 'resnet34' or model_name == 'resnet18':
                 last_conv = -2
@@ -135,12 +133,11 @@ class PretrainedEncoder(Encoder):
 
         elif 'inception' in model_name:
             self.name = 'inception'
-            self.layer_sizes = [288, 768, 1280, 2048]
+            self.layer_sizes = [288, 768, 1280, 2048][:blocks]
             _, modules = zip(*list(net.named_children()))
+            net_layers = [slice(7), slice(7, 10), slice(10, 15), slice(16, 17), slice(17, 21)]
             self.conv_pool1 = nn.Sequential(*modules[:7])
-            self.layers.append(nn.Sequential(*modules[7:10]))
-            self.layers.append(nn.Sequential(*modules[10:15]))
-            self.layers.append(nn.Sequential(*modules[16:17]))
-            self.layers.append(nn.Sequential(*modules[17:21]))
+            for i in range(blocks):
+                self.layers.append(nn.Sequential(*modules[net_layers[i]]))
         else:
             raise Exception("Network not found")

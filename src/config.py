@@ -26,6 +26,7 @@ __C.NET = EasyDict()
 __C.NET.PREDICTOR = "SASNet"
 __C.NET.BLOCK_SIZE = 32  # SASNet block size setting
 
+__C.NET.BLOCKS = 4  # Number of blocks of the encoder (and so the decoder)
 # ENCODER
 __C.NET.ENCODER = 'inception_v3'
 # For MobileCount
@@ -72,7 +73,6 @@ __C.EARLY_STOP_DELTA = 1e-2
 
 # print
 __C.PRINT_FREQ = 10
-
 
 __C.DEVICE = 'cuda'  # cpu or cuda
 
