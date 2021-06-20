@@ -40,11 +40,6 @@ class MobileCount(CrowdCounterNetwork):
 
         return out
 
-    def train(self, mode: bool = True):
-        for name, m in self.named_children():
-            if hasattr(m, 'pretrained'):
-                m.train(False)
-
 
 class LWEncoder(Encoder):
     def __init__(self, layer_sizes, input_channels):

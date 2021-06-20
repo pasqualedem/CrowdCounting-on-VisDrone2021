@@ -111,7 +111,7 @@ if __name__ == '__main__':
     img_train_rule = lambda x: x.replace('R', '.jpg')
     img_test_rule = lambda x, y: os.path.join(x, y)
 
-    size = None
+    size = (224, 224)
 
     train = [train_rule, img_train_rule, dataframe_load_train, size]
     test = [test_rule, img_test_rule, dataframe_load_test, size]
