@@ -29,7 +29,7 @@ __C.NET.BLOCK_SIZE = 32  # SASNet block size setting
 
 __C.NET.BLOCKS = 4  # Number of blocks of the encoder (and so the decoder)
 # ENCODER
-__C.NET.ENCODER = 'inception_v3'
+__C.NET.ENCODER = 'resnet18'
 # For MobileCount
 __C.NET.VERSION = 'x2'
 __C.NET.CHANNELS = 3
@@ -37,7 +37,7 @@ __C.NET.CHANNELS = 3
 __C.NET.PRETRAINED = True
 
 # Possible second encoder
-__C.NET.ENCODER_TIR = 'inception_v3'
+__C.NET.ENCODER_TIR = 'resnet18'
 # For MobileCount
 __C.NET.VERSION_TIR = ''
 __C.NET.CHANNELS_TIR = 3
@@ -45,7 +45,7 @@ __C.NET.CHANNELS_TIR = 3
 __C.NET.PRETRAINED_TIR = True
 
 # DECODER
-__C.NET.DECODER = 'SASDecoder'
+__C.NET.DECODER = 'LWDecoder'
 
 # learning optimizer settings ########################################
 __C.LR = 1e-4  # learning rate

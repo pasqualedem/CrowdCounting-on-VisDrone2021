@@ -35,9 +35,9 @@ class MobileCount(CrowdCounterNetwork):
     def forward(self, x):
         size = x.shape[2:]
 
-        l1, l2, l3, l4 = self.encoder(x)
+        x = self.encoder(x)
 
-        dec = self.decoder(l1, l2, l3, l4)
+        dec = self.decoder(x)
         dec = self.dropout_clf(dec)
         out = self.clf_conv(dec)
         if hasattr(self, 'upsampling'):
