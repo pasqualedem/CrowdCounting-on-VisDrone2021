@@ -23,14 +23,14 @@ __C.DETAILS = ''
 # Net settings ########################################
 __C.NET = EasyDict()
 # PREDICTOR
-__C.NET.PREDICTOR = 'SASNet'
+__C.NET.PREDICTOR = 'MobileCount'
 __C.NET.UPSAMPLING = 'interp'
 __C.NET.BLOCK_SIZE = 32  # SASNet block size setting
 
 __C.NET.BLOCKS = 4  # Number of blocks of the encoder (and so the decoder)
 # ENCODER
-__C.NET.COMPOSED = True
-__C.NET.ENCODER = 'resnet18'
+__C.NET.COMPOSED = False
+__C.NET.ENCODER = 'inception_v3'
 # For MobileCount
 __C.NET.VERSION = 'x2'
 __C.NET.CHANNELS = 3
@@ -38,8 +38,8 @@ __C.NET.CHANNELS = 3
 __C.NET.PRETRAINED = True
 
 # Possible second encoder
-__C.NET.COMPOSED_TIR = True
-__C.NET.ENCODER_TIR = 'resnet18'
+__C.NET.COMPOSED_TIR = False
+__C.NET.ENCODER_TIR = 'inception_v3'
 # For MobileCount
 __C.NET.VERSION_TIR = ''
 __C.NET.CHANNELS_TIR = 3
@@ -47,7 +47,7 @@ __C.NET.CHANNELS_TIR = 3
 __C.NET.PRETRAINED_TIR = True
 
 # DECODER
-__C.NET.DECODER = 'SASDecoder'
+__C.NET.DECODER = 'LWDecoder'
 
 # learning optimizer settings ########################################
 __C.LR = 1e-4  # learning rate
