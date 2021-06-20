@@ -23,7 +23,8 @@ __C.DETAILS = ''
 # Net settings ########################################
 __C.NET = EasyDict()
 # PREDICTOR
-__C.NET.PREDICTOR = "SASNet"
+__C.NET.PREDICTOR = 'SASNet'
+__C.NET.UPSAMPLING = 'convtrans'
 __C.NET.BLOCK_SIZE = 32  # SASNet block size setting
 
 __C.NET.BLOCKS = 4  # Number of blocks of the encoder (and so the decoder)

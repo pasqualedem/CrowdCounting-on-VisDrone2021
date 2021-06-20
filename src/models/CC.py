@@ -141,3 +141,4 @@ class PretrainedEncoder(Encoder):
                 self.layers.append(nn.Sequential(*modules[net_layers[i]]))
         else:
             raise Exception("Network not found")
+

@@ -1,7 +1,7 @@
 """RefineNet-LightWeight. No RCU, only LightWeight-CRP block."""
 import torch.nn as nn
 import torch.nn.functional as F
-from models.block import Bottleneck, CRPBlock, conv1x1, FusionBlock
+from models.block import Bottleneck, CRPBlock, conv1x1, FusionBlock, ConvTransposeUpsampling, ConvUpsampling
 from models.CC import CrowdCounterNetwork, Encoder
 
 
@@ -20,13 +20,17 @@ def initialize_weights(module: nn.Module):
 
 class MobileCount(CrowdCounterNetwork):
 
-    def __init__(self, encoder, encoder_params, decoder, decoder_params):
+    def __init__(self, encoder, encoder_params, decoder, decoder_params, upsampling='interpolation'):
         super(MobileCount, self).__init__(encoder, encoder_params, decoder, decoder_params)
         self.layers_sizes = self.encoder.get_layer_sizes()
 
         self.dropout_clf = nn.Dropout(p=0.5)
         self.clf_conv = nn.Conv2d(self.layers_sizes[0], 1, kernel_size=3, stride=1,
                                   padding=1, bias=True)
+        if upsampling == 'convtrans':
+            self.upsampling = ConvTransposeUpsampling(1, kernel_size=3, stride=2, padding=1, output_padding=1)
+        elif upsampling == 'conv':
+            self.upsampling = ConvUpsampling(1)
 
     def forward(self, x):
         size = x.shape[2:]
@@ -36,7 +40,10 @@ class MobileCount(CrowdCounterNetwork):
         dec = self.decoder(l1, l2, l3, l4)
         dec = self.dropout_clf(dec)
         out = self.clf_conv(dec)
-        out = F.interpolate(out, size=size, mode='bilinear', align_corners=False)
+        if hasattr(self, 'upsampling'):
+            out = self.upsampling(out)
+        else:
+            out = F.interpolate(out, size=size, mode='bilinear', align_corners=False)
 
         return out
 

@@ -14,7 +14,7 @@ MBVersions = {
 # Dict that select which parameter pass to the class for each network
 Predictors = {
     'MobileCount': (MobileCount, []),
-    'SASNet': (SASNet, ['BLOCK_SIZE'])
+    'SASNet': (SASNet, ['BLOCK_SIZE', 'UPSAMPLING'])
              }
 
 Encoders = {

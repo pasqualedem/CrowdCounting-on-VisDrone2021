@@ -38,36 +38,39 @@ class CRPBlock(nn.Module):
         return x
 
 
-class BasicBlock(nn.Module):
+class ConvTransposeUpsampling(nn.Module):
     expansion = 1
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None):
-        super(BasicBlock, self).__init__()
-        self.conv1 = conv3x3(inplanes, planes, stride)
-        self.bn1 = nn.BatchNorm2d(planes, momentum=0.05)
-        self.relu = nn.ReLU(inplace=True)
-        self.conv2 = conv3x3(planes, planes)
-        self.bn2 = nn.BatchNorm2d(planes, momentum=0.05)
-        self.downsample = downsample
-        self.stride = stride
+    def __init__(self, channels, kernel_size=3, stride=2, padding=1, output_padding=1):
+        super(ConvTransposeUpsampling, self).__init__()
+        self.convtrans = nn.ConvTranspose2d(channels, channels,
+                                            kernel_size=kernel_size,
+                                            stride=stride,
+                                            padding=padding,
+                                            output_padding=output_padding)
+        self.conv = nn.Conv2d(channels, channels, kernel_size=3, stride=1, padding=1)
 
-    def forward(self, x):
-        residual = x
+    def forward(self, x, size):
+        x = self.convtrans(x)
+        x = F.interpolate(x, size=size, mode='bilinear', align_corners=False)
+        x = self.conv(x)
 
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
+        return x
 
-        out = self.conv2(out)
-        out = self.bn2(out)
 
-        if self.downsample is not None:
-            residual = self.downsample(x)
+class ConvUpsampling(nn.Module):
+    expansion = 1
 
-        out += residual
-        out = self.relu(out)
+    def __init__(self, channels):
+        super(ConvUpsampling, self).__init__()
+        self.conv = nn.Conv2d(channels, channels,
+                              kernel_size=3, padding=1)
 
-        return out
+    def forward(self, x, size):
+        x = F.interpolate(x, size=size, mode='bilinear', align_corners=False)
+        x = self.conv(x)
+
+        return x
 
 
 class Bottleneck(nn.Module):
