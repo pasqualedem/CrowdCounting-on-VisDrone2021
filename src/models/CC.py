@@ -57,8 +57,11 @@ class CrowdCounterNetwork(nn.Module):
 class Encoder(nn.Module):
 
     def forward(self, x):
-        if hasattr(self, 'name') and self.name == 'inception':
-            x = self.conv_pool1(x)
+        if hasattr(self, 'name'):
+            if self.name == 'inception':
+                x = self.conv_pool1(x)
+            elif 'vgg' in self.name:
+                pass
         else:
             x = self.conv1(x)
             x = self.bn1(x)
@@ -142,6 +145,15 @@ class PretrainedEncoder(Encoder):
             self.conv_pool1 = nn.Sequential(*modules[:7])
             for i in range(blocks):
                 self.layers.append(nn.Sequential(*net_layers[i](modules)))
+        elif 'vgg16_bn' in model_name:
+            self.layer_sizes = [64, 128, 256, 512, 512][:blocks]
+            self.name = 'vgg'
+            vgg = models.vgg16_bn(pretrained=pretrained)
+            net_layers = [slice(6), slice(6, 13), slice(13, 23), slice(23, 33), slice(33, 43)]
+            modules = list(vgg.features.children())
+            # get each stage of the backbone
+            for i in range(blocks):
+                self.layers.append(nn.Sequential(*modules[net_layers[i]]))
         else:
             raise Exception("Network not found")
 
