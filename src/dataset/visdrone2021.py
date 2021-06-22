@@ -130,7 +130,7 @@ def load_test():
     Create a VisDroneDataset object in test mode
     @return: the visdrone testset
     """
-    df = make_dataframe('../dataset/VisDrone2020-CC/test')
+    df = make_dataframe('../datasets/VisDrone2021/Test')
     ds = VisDrone2021Dataset(df, train=False, gt_transform=False)
     return ds
 
