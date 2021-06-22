@@ -151,7 +151,7 @@ class Trainer:
                 self.timer['inference time'].toc(average=True)
                 self.net.build_loss(pred_map, gt)
 
-                pred_map = pred_map.squeeze().data.cpu().numpy()
+                pred_map = pred_map.squeeze(1).data.cpu().numpy()
                 gt = gt.data.cpu().numpy()
 
                 pred_cnt = np.sum(pred_map, axis=(1, 2)) / self.cfg_data.LOG_PARA
