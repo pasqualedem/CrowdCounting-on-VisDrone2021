@@ -28,7 +28,7 @@ def load_CC_test():
     """
     Load CrowdCounter model net for testing mode
     """
-    model_path = "../exp/06-22_04-39_VisDrone2021_MobileCount_resnet34__freeze_resnet34__freeze_LWDecoder_0.0001_NEW/ep_10_val_mae_22.2_val_rmse_26.8.pth"
+    model_path = "../exp/06-24_17-55_VisDrone2021_MobileCount_resnet34__freeze_LWEncoder__LWDecoder_0.0001_NEW/ep_17_val_mae_18.7_val_rmse_29.9.pth"
     cc = choose_model([0], cfg.NET)
     cc.load(model_path)
     return cc

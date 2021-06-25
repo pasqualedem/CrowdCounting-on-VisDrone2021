@@ -32,17 +32,17 @@ __C.NET.BLOCKS = 4  # Number of blocks of the encoder (and so the decoder)
 __C.NET.COMPOSED = False
 __C.NET.ENCODER = 'resnet34'
 # For MobileCount
-__C.NET.VERSION = 'x0_5'
+__C.NET.VERSION = 'x0_75'
 __C.NET.CHANNELS = 3
 # For known models
 __C.NET.PRETRAINED = True
 
 # Possible second encoder
-__C.NET.COMPOSED_TIR = False
-__C.NET.ENCODER_TIR = 'resnet34'
+__C.NET.COMPOSED_TIR = None
+__C.NET.ENCODER_TIR = 'LWEncoder'
 # For MobileCount
 __C.NET.VERSION_TIR = ''
-__C.NET.CHANNELS_TIR = 3
+__C.NET.CHANNELS_TIR = 1
 # For known models
 __C.NET.PRETRAINED_TIR = True
 

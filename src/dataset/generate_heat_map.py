@@ -111,11 +111,11 @@ if __name__ == '__main__':
     img_train_rule = lambda x: x.replace('R', '.jpg')
     img_test_rule = lambda x, y: os.path.join(x, y)
 
-    size = (224, 224)
+    size = (299, 299)
 
     train = [train_rule, img_train_rule, dataframe_load_train, size]
     test = [test_rule, img_test_rule, dataframe_load_test, size]
 
-    make_ground_truth('../../datasets/VisDrone2021/Val/GT_',
-                      '../../datasets/VisDrone2021/Val/RGB',
+    make_ground_truth('../../datasets/VisDrone2021/Test/GT_',
+                      '../../datasets/VisDrone2021/Test/RGB',
                       *train)
