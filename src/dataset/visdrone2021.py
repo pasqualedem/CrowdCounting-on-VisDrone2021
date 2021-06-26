@@ -13,7 +13,7 @@ import transformations as trans
 
 cfg_data = EasyDict()
 
-cfg_data.SIZE = (512, 640)
+cfg_data.SIZE = (224, 224)
 cfg_data.CHANNELS = 4
 cfg_data.FILE_EXTENSION = '.jpg'
 cfg_data.GT_FILE_EXTENSION = '.npz'

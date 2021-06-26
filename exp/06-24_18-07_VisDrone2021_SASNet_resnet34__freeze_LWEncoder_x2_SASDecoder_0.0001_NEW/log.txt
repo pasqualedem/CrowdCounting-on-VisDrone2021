@@ -1,0 +1,88 @@
+{
+    "DATASET": "VisDrone2021",
+    "DETAILS": "NEW",
+    "DEVICE": "cuda",
+    "EARLY_STOP_DELTA": 0.01,
+    "EXP_PATH": "/content/drive/MyDrive/VisDroneExps",
+    "LR": 0.0001,
+    "LR_DECAY": 0.995,
+    "LR_DECAY_START": 0,
+    "MAX_EPOCH": 500,
+    "NET": {
+        "BLOCKS": 4,
+        "BLOCK_SIZE": 32,
+        "CHANNELS": 3,
+        "CHANNELS_TIR": 1,
+        "COMPOSED": false,
+        "COMPOSED_TIR": false,
+        "DECODER": "SASDecoder",
+        "ENCODER": "resnet34",
+        "ENCODER_TIR": "LWEncoder",
+        "PREDICTOR": "SASNet",
+        "PRETRAINED": true,
+        "PRETRAINED_TIR": false,
+        "UPSAMPLING": "interp",
+        "VERSION": "x0_5",
+        "VERSION_TIR": "x2"
+    },
+    "NUM_EPOCH_LR_DECAY": 1,
+    "N_WORKERS": 2,
+    "OPTIM": [
+        "Adam",
+        {
+            "lr": 0.0001,
+            "weight_decay": 0.0001
+        }
+    ],
+    "OPTIM_ADAM": [
+        "Adam",
+        {
+            "lr": 0.0001,
+            "weight_decay": 0.0001
+        }
+    ],
+    "OPTIM_SGD": [
+        "SGD",
+        {
+            "lr": 0.0001,
+            "momentum": 0.95,
+            "weight_decay": 0.0001
+        }
+    ],
+    "PATIENCE": 15,
+    "PRINT_FREQ": 10,
+    "RESUME": null,
+    "SEED": 3035,
+    "TEST_BATCH_SIZE": 6,
+    "TRAIN_BATCH_SIZE": 4,
+    "VAL_BATCH_SIZE": 6,
+    "VAL_DENSE_START": 0,
+    "VAL_FREQ": 10,
+    "VAL_SIZE": 0.2,
+    "W_DECAY": 0.0001
+}
+
+
+
+Epoch 0 |     [mae 33.09 mse 42.61], [val loss 17.0016] [forward time 23.96] [train/valid time 320.17 / 3.81] --- [BEST]
+Epoch 1 |     [mae 23.43 mse 30.67], [val loss 14.9903] [forward time 26.89] [train/valid time 317.91 / 3.92] --- [BEST]
+Epoch 2 |     [mae 29.71 mse 37.96], [val loss 14.2883] [forward time 25.97] [train/valid time 317.35 / 3.90] --- 
+Epoch 3 |     [mae 26.29 mse 37.60], [val loss 15.0693] [forward time 25.00] [train/valid time 316.41 / 3.96] --- 
+Epoch 4 |     [mae 36.50 mse 49.70], [val loss 14.9524] [forward time 25.17] [train/valid time 315.61 / 3.89] --- 
+Epoch 5 |     [mae 35.34 mse 48.36], [val loss 14.4569] [forward time 25.61] [train/valid time 315.49 / 3.89] --- 
+Epoch 6 |     [mae 23.35 mse 32.08], [val loss 16.2890] [forward time 26.09] [train/valid time 315.42 / 3.90] --- [BEST]
+Epoch 7 |     [mae 20.53 mse 29.98], [val loss 13.9263] [forward time 25.90] [train/valid time 315.18 / 3.87] --- [BEST]
+Epoch 8 |     [mae 21.65 mse 29.08], [val loss 14.7022] [forward time 25.97] [train/valid time 315.44 / 3.86] --- [BEST]
+Epoch 9 |     [mae 19.87 mse 27.53], [val loss 16.5777] [forward time 25.68] [train/valid time 315.17 / 3.86] --- [BEST]
+Epoch 10 |     [mae 19.97 mse 29.77], [val loss 14.6463] [forward time 25.54] [train/valid time 315.20 / 3.90] --- 
+Epoch 11 |     [mae 26.98 mse 36.50], [val loss 16.6510] [forward time 25.54] [train/valid time 315.35 / 3.84] --- 
+Epoch 12 |     [mae 25.87 mse 33.57], [val loss 15.0914] [forward time 25.86] [train/valid time 315.36 / 3.83] --- 
+Epoch 13 |     [mae 22.23 mse 25.15], [val loss 16.5471] [forward time 26.09] [train/valid time 314.94 / 3.90] --- [BEST]
+Epoch 14 |     [mae 21.01 mse 26.93], [val loss 15.1788] [forward time 26.39] [train/valid time 315.18 / 3.93] --- 
+Epoch 15 |     [mae 27.67 mse 39.74], [val loss 16.9914] [forward time 26.34] [train/valid time 314.87 / 3.85] --- 
+Epoch 16 |     [mae 19.17 mse 27.50], [val loss 15.7634] [forward time 26.43] [train/valid time 315.29 / 3.86] --- [BEST]
+Epoch 17 |     [mae 20.77 mse 27.44], [val loss 16.5868] [forward time 26.45] [train/valid time 314.95 / 3.90] --- 
+Epoch 18 |     [mae 23.98 mse 31.37], [val loss 15.4668] [forward time 26.25] [train/valid time 314.95 / 3.87] --- 
+Epoch 19 |     [mae 32.22 mse 44.21], [val loss 18.0012] [forward time 26.37] [train/valid time 315.00 / 3.87] --- 
+Epoch 20 |     [mae 23.18 mse 30.42], [val loss 14.9971] [forward time 26.26] [train/valid time 314.98 / 3.86] --- 
+Epoch 21 |     [mae 17.85 mse 24.18], [val loss 15.6247] [forward time 26.32] [train/valid time 315.00 / 3.83] --- [BEST]
