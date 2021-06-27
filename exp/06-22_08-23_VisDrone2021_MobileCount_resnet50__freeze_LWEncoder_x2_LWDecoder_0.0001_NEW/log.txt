@@ -1,0 +1,101 @@
+{
+    "DATASET": "VisDrone2021",
+    "DETAILS": "NEW",
+    "DEVICE": "cuda",
+    "EARLY_STOP_DELTA": 0.01,
+    "EXP_PATH": "/content/drive/MyDrive/VisDroneExps",
+    "LR": 0.0001,
+    "LR_DECAY": 0.995,
+    "LR_DECAY_START": 0,
+    "MAX_EPOCH": 500,
+    "NET": {
+        "BLOCKS": 4,
+        "BLOCK_SIZE": 32,
+        "CHANNELS": 3,
+        "CHANNELS_TIR": 1,
+        "COMPOSED": false,
+        "COMPOSED_TIR": false,
+        "DECODER": "LWDecoder",
+        "ENCODER": "resnet50",
+        "ENCODER_TIR": "LWEncoder",
+        "PREDICTOR": "MobileCount",
+        "PRETRAINED": true,
+        "PRETRAINED_TIR": false,
+        "UPSAMPLING": "interp",
+        "VERSION": "x2",
+        "VERSION_TIR": "x2"
+    },
+    "NUM_EPOCH_LR_DECAY": 1,
+    "N_WORKERS": 2,
+    "OPTIM": [
+        "Adam",
+        {
+            "lr": 0.0001,
+            "weight_decay": 0.0001
+        }
+    ],
+    "OPTIM_ADAM": [
+        "Adam",
+        {
+            "lr": 0.0001,
+            "weight_decay": 0.0001
+        }
+    ],
+    "OPTIM_SGD": [
+        "SGD",
+        {
+            "lr": 0.0001,
+            "momentum": 0.95,
+            "weight_decay": 0.0001
+        }
+    ],
+    "PATIENCE": 20,
+    "PRINT_FREQ": 10,
+    "RESUME": null,
+    "SEED": 3035,
+    "TEST_BATCH_SIZE": 6,
+    "TRAIN_BATCH_SIZE": 4,
+    "VAL_BATCH_SIZE": 6,
+    "VAL_DENSE_START": 0,
+    "VAL_FREQ": 10,
+    "VAL_SIZE": 0.2,
+    "W_DECAY": 0.0001
+}
+
+
+
+Epoch 0 |     [mae 54.65 mse 64.63], [val loss 16.1945] [forward time 33.79] [train/valid time 460.53 / 6.73] --- [BEST]
+Epoch 1 |     [mae 32.99 mse 39.24], [val loss 13.8985] [forward time 32.18] [train/valid time 460.70 / 6.77] --- [BEST]
+Epoch 2 |     [mae 24.51 mse 32.28], [val loss 13.8235] [forward time 31.96] [train/valid time 460.58 / 6.76] --- [BEST]
+Epoch 3 |     [mae 23.62 mse 30.87], [val loss 16.1214] [forward time 30.38] [train/valid time 458.59 / 6.89] --- [BEST]
+Epoch 4 |     [mae 25.49 mse 33.15], [val loss 13.3619] [forward time 31.69] [train/valid time 456.57 / 6.82] --- 
+Epoch 5 |     [mae 32.73 mse 46.39], [val loss 13.7254] [forward time 31.21] [train/valid time 457.02 / 6.91] --- 
+Epoch 6 |     [mae 22.62 mse 31.76], [val loss 15.2978] [forward time 30.46] [train/valid time 457.00 / 6.84] --- [BEST]
+Epoch 7 |     [mae 22.54 mse 31.47], [val loss 13.7405] [forward time 30.33] [train/valid time 457.27 / 6.86] --- [BEST]
+Epoch 8 |     [mae 20.61 mse 26.40], [val loss 15.6452] [forward time 30.73] [train/valid time 456.59 / 6.83] --- [BEST]
+Epoch 9 |     [mae 34.56 mse 50.30], [val loss 13.6056] [forward time 30.91] [train/valid time 456.44 / 6.82] --- 
+Epoch 10 |     [mae 30.63 mse 42.29], [val loss 13.8144] [forward time 30.99] [train/valid time 457.33 / 6.70] --- 
+Epoch 11 |     [mae 30.34 mse 37.56], [val loss 13.6252] [forward time 31.00] [train/valid time 458.92 / 6.73] --- 
+Epoch 12 |     [mae 19.48 mse 27.48], [val loss 14.9199] [forward time 31.10] [train/valid time 460.17 / 6.75] --- [BEST]
+Epoch 13 |     [mae 23.00 mse 30.94], [val loss 14.4184] [forward time 30.99] [train/valid time 460.32 / 6.71] --- 
+Epoch 14 |     [mae 21.00 mse 28.78], [val loss 13.1461] [forward time 31.21] [train/valid time 460.01 / 6.73] --- 
+Epoch 15 |     [mae 18.70 mse 24.47], [val loss 13.4193] [forward time 31.40] [train/valid time 460.35 / 6.65] --- [BEST]
+Epoch 16 |     [mae 21.64 mse 33.47], [val loss 13.7860] [forward time 31.23] [train/valid time 459.82 / 6.73] --- 
+Epoch 17 |     [mae 22.30 mse 32.91], [val loss 14.1234] [forward time 31.23] [train/valid time 459.85 / 6.74] --- 
+Epoch 18 |     [mae 22.38 mse 34.15], [val loss 16.5625] [forward time 31.18] [train/valid time 459.86 / 6.72] --- 
+Epoch 19 |     [mae 27.25 mse 41.62], [val loss 14.1231] [forward time 31.17] [train/valid time 459.90 / 6.74] --- 
+Epoch 20 |     [mae 16.23 mse 22.46], [val loss 13.3141] [forward time 31.28] [train/valid time 459.76 / 6.74] --- [BEST]
+Epoch 21 |     [mae 21.26 mse 26.80], [val loss 16.0694] [forward time 31.38] [train/valid time 459.70 / 6.79] --- 
+Epoch 22 |     [mae 23.65 mse 35.28], [val loss 16.9506] [forward time 31.58] [train/valid time 459.82 / 6.87] --- 
+Epoch 23 |     [mae 22.33 mse 30.68], [val loss 14.9543] [forward time 31.56] [train/valid time 454.71 / 6.89] --- 
+Epoch 24 |     [mae 22.47 mse 32.85], [val loss 16.5378] [forward time 31.61] [train/valid time 454.38 / 6.68] --- 
+Epoch 25 |     [mae 24.06 mse 31.15], [val loss 13.9421] [forward time 31.74] [train/valid time 458.79 / 6.66] --- 
+Epoch 26 |     [mae 20.13 mse 25.33], [val loss 17.2213] [forward time 31.72] [train/valid time 459.66 / 6.86] --- 
+Epoch 27 |     [mae 27.36 mse 34.88], [val loss 14.2191] [forward time 31.73] [train/valid time 459.42 / 6.68] --- 
+Epoch 28 |     [mae 23.13 mse 30.73], [val loss 13.7493] [forward time 31.68] [train/valid time 459.92 / 6.69] --- 
+Epoch 29 |     [mae 20.43 mse 28.69], [val loss 14.1996] [forward time 31.77] [train/valid time 459.72 / 6.70] --- 
+Epoch 30 |     [mae 20.99 mse 29.41], [val loss 16.9696] [forward time 31.71] [train/valid time 459.97 / 6.69] --- 
+Epoch 31 |     [mae 23.80 mse 34.43], [val loss 17.3016] [forward time 31.70] [train/valid time 455.68 / 6.65] --- 
+Epoch 32 |     [mae 21.96 mse 31.47], [val loss 14.2966] [forward time 31.71] [train/valid time 455.41 / 6.60] --- 
+Epoch 33 |     [mae 21.11 mse 31.49], [val loss 16.5027] [forward time 31.53] [train/valid time 458.52 / 6.70] --- 
+Epoch 34 |     [mae 26.44 mse 36.45], [val loss 13.9935] [forward time 31.58] [train/valid time 459.59 / 6.71] --- 
